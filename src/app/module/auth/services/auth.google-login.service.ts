@@ -1,4 +1,4 @@
-import { prisma } from "../../../lib/prisma"
+
 import { tokenUtils } from "../../../utils/token";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

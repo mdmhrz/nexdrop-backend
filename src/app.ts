@@ -10,6 +10,13 @@ import { auth } from './app/lib/auth';
 
 const app: Application = express();
 
+
+// Set EJS as the view engine and specify the views directory
+app.set("view engine", "ejs");
+app.set("views", path.resolve(process.cwd(), "src/app/templates"));
+
+
+
 // Mount the authentication routes (Google OAuth, email/password, etc.)
 app.use("/api/auth", toNodeHandler(auth))
 

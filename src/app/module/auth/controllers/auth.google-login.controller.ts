@@ -22,10 +22,15 @@ export const googleLoginController = catchAsync(
 
         // For now, just redirect to the google OAuth flow
         // In production, you should render a page with the callback URL
-        res.json({
-            message: "Use this URL for Google OAuth",
+        // res.json({
+        //     message: "Use this URL for Google OAuth",
+        //     callbackURL: callbackURL,
+        //     googleAuthUrl: `${envVars.BETTER_AUTH_URL}/auth/google-callback`
+        // })
+
+        res.render("googleRedirect", {
             callbackURL: callbackURL,
-            googleAuthUrl: `${envVars.BETTER_AUTH_URL}/auth/google-callback`
+            betterAuthUrl: envVars.BETTER_AUTH_URL
         })
     }
 );

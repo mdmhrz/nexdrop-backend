@@ -4,6 +4,7 @@ import { prisma } from "./prisma";
 import { UserRole, UserStatus } from "../../generated/prisma/enums";
 import { envVars } from "../config/env";
 import { bearer, emailOTP } from "better-auth/plugins";
+import { sendEmail } from "../utils/email";
 
 export const auth = betterAuth({
     baseURL: envVars.BETTER_AUTH_URL,
@@ -81,17 +82,15 @@ export const auth = betterAuth({
                     }
 
                     if (user && !user.emailVerified) {
-                        console.log(`Sending OTP to ${email}: ${otp}`)
-                        // TODO: Implement email sending via SMTP
-                        // sendEmail({
-                        //     to: email,
-                        //     subject: "Verify your email",
-                        //     templateName: "otp",
-                        //     templateData: {
-                        //         name: user.name,
-                        //         otp
-                        //     }
-                        // })
+                        await sendEmail({
+                            to: email,
+                            subject: "Verify your email - Nex Drop",
+                            templateName: "otp",
+                            templateData: {
+                                name: user.name,
+                                otp
+                            }
+                        })
                     }
                 } else if (type === "forget-password") {
 
@@ -107,17 +106,15 @@ export const auth = betterAuth({
                     }
 
                     if (user) {
-                        console.log(`Sending password reset OTP to ${email}: ${otp}`)
-                        // TODO: Implement email sending via SMTP
-                        // sendEmail({
-                        //     to: email,
-                        //     subject: "Password Reset OTP",
-                        //     templateName: "password-reset-otp",
-                        //     templateData: {
-                        //         name: user.name,
-                        //         otp
-                        //     }
-                        // })
+                        await sendEmail({
+                            to: email,
+                            subject: "Password Reset OTP - Nex Drop",
+                            templateName: "password-reset-otp",
+                            templateData: {
+                                name: user.name,
+                                otp
+                            }
+                        })
                     }
                 }
             },
