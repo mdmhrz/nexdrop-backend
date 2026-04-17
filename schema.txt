@@ -524,3 +524,27 @@ Rider System
 Earnings and Cashout
 Notifications
 Admin Dashboard and Stats
+
+
+
+
+@file:nex-drop-backend 
+this is my new project
+
+@file:medicare-backend 
+this is my old project where i've implemented all the login apis using better auth custom,
+
+your job is implement all of the auth routes including login, register, etc which i've implemeted 
+
+do not ask anyting just implemet in my new project properly as i implemented in here
+
+medicare-backend/src/app/module/auth/auth.route.ts
+this is the route where you can see the apis,
+
+do as the same way i implemented
+
+do not use ejs for now.
+
+first of all show me the plan that what you are going to do and after check i will tell you to proceed
+
+and after all the change give me the all endpoints of API and summury

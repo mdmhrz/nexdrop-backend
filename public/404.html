@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 - Page Not Found</title>
+    <style>
+        /* Global reset & layout */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f111a;
+            /* Dark background */
+            color: #888ca3;
+            /* Dimmed text */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Container for centering */
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 2rem;
+        }
+
+        /* Main 404 number */
+        h1 {
+            font-size: 8rem;
+            font-weight: 700;
+            color: #1e90ff;
+            /* Brand blue */
+            margin-bottom: 1rem;
+        }
+
+        /* Subtitle text */
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            color: #888ca35d;
+
+        }
+
+
+
+        /* Link/button */
+        a {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            background-color: #1e90ff;
+            /* Brand blue */
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        a:hover {
+            background-color: #0066cc;
+            transform: translateY(-2px);
+        }
+
+        /* Optional subtle animation */
+        h1 {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>404</h1>
+        <p>Oops! The page you’re looking for doesn’t exist.<br>Maybe check the URL or go back home.</p>
+        <a href="/">Go back home</a>
+    </div>
+</body>
+
+</html>

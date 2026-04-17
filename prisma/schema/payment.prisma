@@ -1,5 +1,5 @@
 model Payment {
-  id              String         @id @default(uuid())
+  id              String         @id @default(uuid(7))
 
   parcelId        String         @unique
   customerId      String
@@ -20,7 +20,7 @@ model Payment {
 }
 
 model Earning {
-  id           String         @id @default(uuid())
+  id           String         @id @default(uuid(7))
 
   riderId      String
   parcelId     String         @unique
@@ -40,7 +40,7 @@ model Earning {
 }
 
 model Cashout {
-  id            String         @id @default(uuid())
+  id            String         @id @default(uuid(7))
 
   riderId       String
 

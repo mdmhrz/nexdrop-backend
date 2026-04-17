@@ -1,20 +1,32 @@
 import express, { Application, Request, Response } from 'express';
-import { prisma } from './app/lib/prisma';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import { IndexRoutes } from './app/routes';
+import { globalErrorHandler } from './app/middleware/globalErrorHandler';
+import notFound from './app/middleware/notFound';
+import { toNodeHandler } from 'better-auth/node';
+import { auth } from './app/lib/auth';
 
 
 const app: Application = express();
 
+// Mount the authentication routes (Google OAuth, email/password, etc.)
+app.use("/api/auth", toNodeHandler(auth))
 
 // Enable URL-encoded form data parsing
 app.use(express.urlencoded({ extended: true }));
 
+
 // Middleware to parse JSON bodies
 app.use(express.json());
 
+
+// Parse cookies
+app.use(cookieParser());
+
+
 // Serve public static files
-// app.use(express.static(path.resolve(process.cwd(), 'public')));
+app.use(express.static(path.resolve(process.cwd(), 'public')));
 
 // Basic route - Serve landing page
 app.get('/', (_: Request, res: Response) => {
@@ -22,8 +34,15 @@ app.get('/', (_: Request, res: Response) => {
 });
 
 
-
+// all define routes will be here
 app.use('/api/v1', IndexRoutes)
+
+
+// Not found middleware
+app.use(notFound);
+
+// Error handler middleware - must be last
+app.use(globalErrorHandler)
 
 
 export default app; 
