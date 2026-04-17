@@ -1,0 +1,254 @@
+// enums
+enum UserRole {
+  ADMIN
+  RIDER
+  CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum ParcelStatus {
+  REQUESTED
+  ASSIGNED
+  PICKED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum RiderStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum PaymentMethod {
+  STRIPE
+  MANUAL
+  BKASH
+}
+
+enum EarningStatus {
+  PENDING
+  PAID
+}
+
+enum CashoutStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  SUCCESS
+}
+
+// users table
+model User {
+  id            String      @id @default(uuid())
+  name          String
+  email         String      @unique
+  passwordHash  String
+  phone         String?
+
+  role          UserRole
+  status        UserStatus  @default(ACTIVE)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  parcels       Parcel[]    @relation("CustomerParcels")
+  payments      Payment[]
+  notifications Notification[]
+  addresses     UserAddress[]
+  statusLogs    ParcelStatusLog[]
+  riderProfile  Rider?
+}
+
+// riders table
+model Rider {
+  id               String      @id @default(uuid())
+  userId           String      @unique
+
+  district         String
+  currentStatus    RiderStatus @default(AVAILABLE)
+
+  rating           Float       @default(0)
+  totalDeliveries  Int         @default(0)
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  parcels          Parcel[]
+  earnings         Earning[]
+  cashouts         Cashout[]
+}
+
+// parcels table
+model Parcel {
+  id              String        @id @default(uuid())
+  trackingId      String        @unique
+
+  customerId      String
+  riderId         String?
+
+  pickupAddress   String
+  deliveryAddress String
+
+  districtFrom    String
+  districtTo      String
+
+  status          ParcelStatus  @default(REQUESTED)
+
+  price           Float
+  isPaid          Boolean       @default(false)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  customer        User          @relation("CustomerParcels", fields: [customerId], references: [id])
+  rider           Rider?        @relation(fields: [riderId], references: [id])
+
+  statusLogs      ParcelStatusLog[]
+  payment         Payment?
+  earning         Earning?
+
+  @@index([customerId])
+  @@index([riderId])
+  @@index([status])
+}
+
+// parcel status logs table
+model ParcelStatusLog {
+  id          String      @id @default(uuid())
+
+  parcelId    String
+  status      ParcelStatus
+  changedBy   String
+  note        String?
+
+  timestamp   DateTime    @default(now())
+
+  parcel      Parcel      @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [changedBy], references: [id])
+}
+
+// payments table
+model Payment {
+  id              String         @id @default(uuid())
+
+  parcelId        String         @unique
+  customerId      String
+
+  amount          Float
+  paymentMethod   PaymentMethod
+  transactionId   String?        @unique
+
+  status          PaymentStatus  @default(PENDING)
+
+  createdAt       DateTime       @default(now())
+
+  parcel          Parcel         @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  customer        User           @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+}
+
+// earnings table
+model Earning {
+  id           String         @id @default(uuid())
+
+  riderId      String
+  parcelId     String         @unique
+
+  amount       Float
+  percentage   Float
+
+  status       EarningStatus  @default(PENDING)
+
+  createdAt    DateTime       @default(now())
+
+  rider        Rider          @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  parcel       Parcel         @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+}
+
+// cashouts table
+model Cashout {
+  id            String         @id @default(uuid())
+
+  riderId       String
+
+  amount        Float
+  status        CashoutStatus  @default(PENDING)
+
+  requestedAt   DateTime       @default(now())
+  processedAt   DateTime?
+
+  rider         Rider          @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+}
+
+// notifications table
+model Notification {
+  id        String           @id @default(uuid())
+
+  userId    String
+
+  title     String
+  message   String
+  type      NotificationType
+  isRead    Boolean          @default(false)
+
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// user addresses table
+model UserAddress {
+  id        String   @id @default(uuid())
+
+  userId    String
+
+  label     String
+  address   String
+  district  String
+  phone     String?
+  isDefault Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isDefault])
+}
+
+// stats cache table
+model StatsCache {
+  id            String   @id @default(dbgenerated("uuid_generate_v7()"))
+
+  totalParcels  Int      @default(0)
+  totalUsers    Int      @default(0)
+  totalRevenue  Float    @default(0)
+
+  updatedAt     DateTime @updatedAt
+
+  @@map("stats_cache")
+}

@@ -16,3 +16,8 @@ logs
 *.pfx
 *.cer
 generated
+/generated/prisma
+
+/generated/prisma
+
+/generated/prisma
