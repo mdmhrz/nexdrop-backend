@@ -1,0 +1,57 @@
+model Payment {
+  id              String         @id @default(uuid())
+
+  parcelId        String         @unique
+  customerId      String
+
+  amount          Float
+  paymentMethod   PaymentMethod
+  transactionId   String?        @unique
+
+  status          PaymentStatus  @default(PENDING)
+
+  createdAt       DateTime       @default(now())
+
+  parcel          Parcel         @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  customer        User           @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("payment")
+}
+
+model Earning {
+  id           String         @id @default(uuid())
+
+  riderId      String
+  parcelId     String         @unique
+
+  amount       Float
+  percentage   Float
+
+  status       EarningStatus  @default(PENDING)
+
+  createdAt    DateTime       @default(now())
+
+  rider        Rider          @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  parcel       Parcel         @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@map("earning")
+}
+
+model Cashout {
+  id            String         @id @default(uuid())
+
+  riderId       String
+
+  amount        Float
+  status        CashoutStatus  @default(PENDING)
+
+  requestedAt   DateTime       @default(now())
+  processedAt   DateTime?
+
+  rider         Rider          @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@map("cashout")
+}

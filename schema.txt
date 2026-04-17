@@ -1,104 +1,212 @@
-// enums
+// ============================================================================
+// NEXDROP DATABASE SCHEMA
+// ============================================================================
+// This schema defines the complete database structure for the NexDrop parcel
+// delivery platform. It includes user authentication, parcel management,
+// payment processing, rider management, and notification systems.
+// ============================================================================
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+// User role definitions with hierarchical access levels
 enum UserRole {
-  ADMIN
-  RIDER
-  CUSTOMER
+  SUPER_ADMIN  // Full system access
+  ADMIN        // Administrative access
+  RIDER        // Delivery rider access
+  CUSTOMER     // Regular customer access
 }
 
+// User account status for managing user lifecycle
 enum UserStatus {
-  ACTIVE
-  BLOCKED
+  ACTIVE       // User can access the system
+  BLOCKED      // User temporarily blocked
+  DELETED      // User marked for deletion
 }
 
+// Parcel delivery status tracking
 enum ParcelStatus {
-  REQUESTED
-  ASSIGNED
-  PICKED
-  IN_TRANSIT
-  DELIVERED
-  CANCELLED
+  REQUESTED    // Parcel requested by customer
+  ASSIGNED     // Rider assigned to parcel
+  PICKED       // Rider picked up parcel
+  IN_TRANSIT   // Parcel in transit to destination
+  DELIVERED    // Parcel successfully delivered
+  CANCELLED    // Parcel delivery cancelled
 }
 
+// Rider availability status for dispatch
 enum RiderStatus {
-  AVAILABLE
-  BUSY
-  OFFLINE
+  AVAILABLE    // Rider available for new deliveries
+  BUSY         // Rider currently on delivery
+  OFFLINE      // Rider not available
 }
 
+// Rider account lifecycle status
+enum RiderAccountStatus {
+  PENDING      // Account awaiting approval
+  ACTIVE       // Account approved and active
+  SUSPENDED    // Account temporarily suspended
+}
+
+// Payment transaction status
 enum PaymentStatus {
-  PENDING
-  SUCCESS
-  FAILED
+  PENDING      // Payment awaiting processing
+  SUCCESS      // Payment completed successfully
+  FAILED       // Payment failed
 }
 
+// Available payment methods
 enum PaymentMethod {
-  STRIPE
-  MANUAL
-  BKASH
+  STRIPE       // Credit card via Stripe
+  MANUAL       // Manual payment processing
+  BKASH        // bKash mobile payment
 }
 
+// Rider earning status
 enum EarningStatus {
-  PENDING
-  PAID
+  PENDING      // Earnings awaiting payout
+  PAID         // Earnings paid to rider
 }
 
+// Cashout request status
 enum CashoutStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  PAID
+  PENDING      // Cashout request awaiting approval
+  APPROVED     // Cashout approved
+  REJECTED     // Cashout rejected
+  PAID         // Cashout completed
 }
 
+// Notification types for user alerts
 enum NotificationType {
-  INFO
-  WARNING
-  SUCCESS
+  INFO         // Informational message
+  WARNING      // Warning message
+  SUCCESS      // Success message
 }
 
-// users table
+// ============================================================================
+// AUTHENTICATION MODELS
+// ============================================================================
+
+// User model with authentication and profile information
 model User {
-  id            String      @id @default(uuid())
+  id            String        @id
   name          String
-  email         String      @unique
-  passwordHash  String
+  email         String
+  emailVerified Boolean      @default(false)
+  image         String?
+
+  // Additional Fields
   phone         String?
+  role          UserRole      @default(CUSTOMER)
+  status        UserStatus    @default(ACTIVE)
 
-  role          UserRole
-  status        UserStatus  @default(ACTIVE)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  parcels       Parcel[]    @relation("CustomerParcels")
+  // Relations
+  parcels       Parcel[]      @relation("CustomerParcels")
   payments      Payment[]
   notifications Notification[]
   addresses     UserAddress[]
   statusLogs    ParcelStatusLog[]
   riderProfile  Rider?
+
+  // Authentication Relations
+  sessions      Session[]
+  accounts      Account[]
+
+  @@unique([email])
+  @@map("user")
 }
 
-// riders table
+// Session model for user authentication sessions
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+// Account model for OAuth/social login providers
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+// Verification model for email/phone verification tokens
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ============================================================================
+// RIDER MODELS
+// ============================================================================
+
+// Rider profile with performance metrics
 model Rider {
-  id               String      @id @default(uuid())
-  userId           String      @unique
+  id               String              @id @default(uuid())
+  userId           String              @unique
 
-  district         String
-  currentStatus    RiderStatus @default(AVAILABLE)
+  district         String              // Primary operating district
 
-  rating           Float       @default(0)
-  totalDeliveries  Int         @default(0)
+  accountStatus    RiderAccountStatus  @default(PENDING)
+  currentStatus    RiderStatus         @default(AVAILABLE)
 
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  rating           Float               @default(0)
+  totalDeliveries  Int                 @default(0)
 
-  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   parcels          Parcel[]
   earnings         Earning[]
   cashouts         Cashout[]
+
+  @@index([accountStatus])
+  @@index([currentStatus])
+  @@map("rider")
 }
 
-// parcels table
+// ============================================================================
+// PARCEL MODELS
+// ============================================================================
+
+// Parcel delivery model with tracking information
 model Parcel {
   id              String        @id @default(uuid())
   trackingId      String        @unique
@@ -130,24 +238,31 @@ model Parcel {
   @@index([customerId])
   @@index([riderId])
   @@index([status])
+  @@map("parcel")
 }
 
-// parcel status logs table
+// Parcel status change log for tracking delivery progress
 model ParcelStatusLog {
-  id          String      @id @default(uuid())
+  id          String       @id @default(uuid())
 
   parcelId    String
   status      ParcelStatus
-  changedBy   String
+  changedBy   String       // User ID who changed the status
   note        String?
 
-  timestamp   DateTime    @default(now())
+  timestamp   DateTime     @default(now())
 
-  parcel      Parcel      @relation(fields: [parcelId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [changedBy], references: [id])
+  parcel      Parcel       @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [changedBy], references: [id])
+
+  @@map("parcel_status_log")
 }
 
-// payments table
+// ============================================================================
+// PAYMENT MODELS
+// ============================================================================
+
+// Payment transaction model
 model Payment {
   id              String         @id @default(uuid())
 
@@ -166,9 +281,10 @@ model Payment {
   customer        User           @relation(fields: [customerId], references: [id])
 
   @@index([customerId])
+  @@map("payment")
 }
 
-// earnings table
+// Rider earnings model for tracking delivery income
 model Earning {
   id           String         @id @default(uuid())
 
@@ -176,7 +292,7 @@ model Earning {
   parcelId     String         @unique
 
   amount       Float
-  percentage   Float
+  percentage   Float          // Commission percentage
 
   status       EarningStatus  @default(PENDING)
 
@@ -186,9 +302,10 @@ model Earning {
   parcel       Parcel         @relation(fields: [parcelId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
+  @@map("earning")
 }
 
-// cashouts table
+// Rider cashout request model
 model Cashout {
   id            String         @id @default(uuid())
 
@@ -203,9 +320,14 @@ model Cashout {
   rider         Rider          @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
+  @@map("cashout")
 }
 
-// notifications table
+// ============================================================================
+// NOTIFICATION MODELS
+// ============================================================================
+
+// User notification model
 model Notification {
   id        String           @id @default(uuid())
 
@@ -219,15 +341,21 @@ model Notification {
   createdAt DateTime         @default(now())
 
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification")
 }
 
-// user addresses table
+// ============================================================================
+// ADDRESS MODELS
+// ============================================================================
+
+// User saved addresses for quick checkout
 model UserAddress {
   id        String   @id @default(uuid())
 
   userId    String
 
-  label     String
+  label     String   // e.g., "Home", "Office"
   address   String
   district  String
   phone     String?
@@ -238,11 +366,16 @@ model UserAddress {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isDefault])
+  @@map("user_address")
 }
 
-// stats cache table
+// ============================================================================
+// CACHE MODELS
+// ============================================================================
+
+// Statistics cache for dashboard performance
 model StatsCache {
-  id            String   @id @default(dbgenerated("uuid_generate_v7()"))
+  id            String   @id @default(uuid(7))
 
   totalParcels  Int      @default(0)
   totalUsers    Int      @default(0)
@@ -252,3 +385,142 @@ model StatsCache {
 
   @@map("stats_cache")
 }
+
+
+
+
+
+
+
+
+NexDrop API Implementation Order (MVP Roadmap)
+1. Auth System (First Priority)
+
+Why first: Everything depends on user identity, roles, and sessions.
+
+APIs:
+POST /auth/register
+POST /auth/login
+GET /auth/me
+POST /auth/logout
+After this you can:
+Identify CUSTOMER / RIDER / ADMIN
+Protect all other routes
+
+Without this layer, nothing else can function properly.
+
+2. User System (Second Layer)
+
+Admin needs this early for management and control.
+
+APIs:
+GET /users?search=email
+GET /users/:id
+PATCH /users/:id/role
+PATCH /users/:id/status
+Why now:
+Admin panel depends on it
+Role switching is required for parcel workflow
+3. User Addresses (Support Feature)
+
+This supports parcel creation and checkout flow.
+
+APIs:
+GET /addresses
+POST /addresses
+PATCH /addresses/:id
+DELETE /addresses/:id
+PATCH /addresses/:id/default
+4. Core Feature: Parcel System (Most Important)
+
+This is the core business logic of NexDrop.
+
+Customer APIs:
+POST /parcels
+GET /parcels/my
+GET /parcels/:id
+PATCH /parcels/:id/cancel
+Admin APIs:
+GET /parcels
+PATCH /parcels/:id/assign-rider
+PATCH /parcels/:id/status
+Rider APIs:
+GET /parcels/available
+GET /parcels/assigned
+PATCH /parcels/:id/pick
+PATCH /parcels/:id/deliver
+
+This is the main business workflow of the system.
+
+5. Parcel Status Logs (Tracking System)
+
+Used for tracking every status change.
+
+API:
+GET /parcels/:id/logs
+6. Payment System
+
+Built after parcel system is functional.
+
+APIs:
+POST /payments/initiate
+POST /payments/verify
+GET /payments/:parcelId
+
+Depends on parcel existence.
+
+7. Rider System
+
+Handles rider-specific data and operations.
+
+APIs:
+GET /rider/me
+PATCH /rider/status
+GET /parcels/available
+GET /parcels/assigned
+
+Requires parcels and user roles to exist.
+
+8. Earnings and Cashout System
+
+Activated after delivery flow exists.
+
+Rider APIs:
+GET /earnings/me
+GET /earnings/history
+POST /cashouts/request
+GET /cashouts/me
+Admin APIs:
+GET /cashouts
+PATCH /cashouts/:id/approve
+PATCH /cashouts/:id/reject
+PATCH /cashouts/:id/pay
+9. Notifications System
+
+Used across the entire system for alerts and updates.
+
+APIs:
+GET /notifications
+PATCH /notifications/:id/read
+PATCH /notifications/read-all
+10. Admin Dashboard and Stats Cache
+
+Final layer for analytics and system overview.
+
+APIs:
+GET /admin/stats
+PATCH /admin/stats/recalculate
+Internal triggers:
+user registration increments total users
+parcel creation updates total parcels and revenue
+Final MVP Build Order Summary
+Auth
+Users
+Addresses
+Parcels (core system)
+Parcel Logs
+Payments
+Rider System
+Earnings and Cashout
+Notifications
+Admin Dashboard and Stats

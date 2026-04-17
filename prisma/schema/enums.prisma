@@ -1,0 +1,63 @@
+enum UserRole {
+    SUPER_ADMIN
+    ADMIN
+    RIDER
+    CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  DELETED
+}
+
+enum ParcelStatus {
+  REQUESTED
+  ASSIGNED
+  PICKED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum RiderStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum RiderAccountStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum PaymentMethod {
+  STRIPE
+  MANUAL
+  BKASH
+}
+
+enum EarningStatus {
+  PENDING
+  PAID
+}
+
+enum CashoutStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  SUCCESS
+}

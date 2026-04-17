@@ -1,0 +1,16 @@
+model Notification {
+  id        String           @id @default(uuid())
+
+  userId    String
+
+  title     String
+  message   String
+  type      NotificationType
+  isRead    Boolean          @default(false)
+
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification")
+}

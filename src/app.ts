@@ -1,5 +1,7 @@
 import express, { Application, Request, Response } from 'express';
 import { prisma } from './app/lib/prisma';
+import path from 'path';
+import { IndexRoutes } from './app/routes';
 
 
 const app: Application = express();
@@ -11,11 +13,17 @@ app.use(express.urlencoded({ extended: true }));
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-// Basic route
-app.get('/', async (req: Request, res: Response) => {
-    const stats = await prisma.statsCache.findFirst();
-    res.status(200).json(stats);
+// Serve public static files
+// app.use(express.static(path.resolve(process.cwd(), 'public')));
+
+// Basic route - Serve landing page
+app.get('/', (_: Request, res: Response) => {
+    res.sendFile(path.resolve(process.cwd(), 'public/index.html'));
 });
+
+
+
+app.use('/api/v1', IndexRoutes)
 
 
 export default app; 
