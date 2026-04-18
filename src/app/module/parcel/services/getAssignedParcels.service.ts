@@ -1,7 +1,21 @@
 import { prisma } from "../../../lib/prisma";
-import { ParcelStatus } from "../../../../generated/prisma/enums";
+import { ParcelStatus, RiderAccountStatus } from "../../../../generated/prisma/enums";
+import AppError from "../../../errorHelper/AppError";
+import status from "http-status";
 
 export const getAssignedParcelsService = async (riderId: string, page: number = 1, limit: number = 10) => {
+    const rider = await prisma.rider.findUnique({
+        where: { userId: riderId }
+    });
+
+    if (!rider) {
+        throw new AppError(status.NOT_FOUND, "Rider profile not found");
+    }
+
+    if (rider.accountStatus !== RiderAccountStatus.ACTIVE) {
+        throw new AppError(status.FORBIDDEN, "Only active riders can view assigned parcels");
+    }
+
     const skip = (page - 1) * limit;
 
     const [parcels, total] = await Promise.all([
