@@ -115,10 +115,10 @@ router.patch(
     acceptParcelController
 );
 
-// GET /parcels/:id - Get a specific parcel by ID (Customer & Rider Only) - Must be last
+// GET /parcels/:id - Get a specific parcel by ID (Customer, Rider, Admin & Super Admin) - Must be last
 router.get(
     '/:id',
-    checkAuth(UserRole.CUSTOMER, UserRole.RIDER),
+    checkAuth(UserRole.CUSTOMER, UserRole.RIDER, UserRole.ADMIN, UserRole.SUPER_ADMIN),
     getParcelByIdController
 );
 

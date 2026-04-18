@@ -450,9 +450,9 @@ Cookie: better-auth.session_token=<session_token>
 ### Phase 7: Customer Tracks Parcel
 
 #### GET /parcels/:id
-Get a specific parcel by ID (accessible by customer or assigned rider).
+Get a specific parcel by ID (accessible by customer, assigned rider, or admin).
 
-**Authentication**: Required (CUSTOMER, RIDER only)
+**Authentication**: Required (CUSTOMER, RIDER, ADMIN, SUPER_ADMIN)
 
 **Headers**:
 ```

@@ -7,9 +7,10 @@ import { getParcelByIdService } from "../services";
 export const getParcelByIdController = catchAsync(
     async (req: Request, res: Response) => {
         const userId = req.user?.userId;
+        const userRole = req.user?.role;
         const parcelId = req.params.id;
 
-        if (!userId) {
+        if (!userId || !userRole) {
             sendResponse(res, {
                 httpStatusCode: status.UNAUTHORIZED,
                 success: false,
@@ -18,7 +19,7 @@ export const getParcelByIdController = catchAsync(
             return;
         }
 
-        const parcel = await getParcelByIdService(parcelId as string, userId as string);
+        const parcel = await getParcelByIdService(parcelId as string, userId as string, userRole as string);
 
         sendResponse(res, {
             httpStatusCode: status.OK,

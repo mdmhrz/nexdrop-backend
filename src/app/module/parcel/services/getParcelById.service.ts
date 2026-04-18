@@ -1,8 +1,9 @@
 import { prisma } from "../../../lib/prisma";
 import AppError from "../../../errorHelper/AppError";
 import status from "http-status";
+import { UserRole } from "../../../../generated/prisma/enums";
 
-export const getParcelByIdService = async (parcelId: string, userId: string) => {
+export const getParcelByIdService = async (parcelId: string, userId: string, userRole: string) => {
     const parcel = await prisma.parcel.findUnique({
         where: { id: parcelId },
         include: {
@@ -45,6 +46,11 @@ export const getParcelByIdService = async (parcelId: string, userId: string) => 
 
     if (!parcel) {
         throw new AppError(status.NOT_FOUND, "Parcel not found");
+    }
+
+    // Admins and Super Admins can view any parcel
+    if (userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN) {
+        return parcel;
     }
 
     // Check if user is the customer or the rider assigned to this parcel
