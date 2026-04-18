@@ -1,0 +1,283 @@
+# Parcel Module - Brief Summary
+
+The parcel module enables customers to create delivery requests, riders to accept and deliver parcels, and admins to monitor and manage the system.
+
+**Current State**: All core parcel workflow APIs are implemented without payment integration.
+- Customers can create parcels
+- Riders can accept/deliver parcels
+- Admins can assign riders and override statuses
+- Parcel status tracking with logs is fully functional
+- Rider earnings are generated but not yet paid
+
+**Known Limitation**: Payment processing is not implemented. The `isPaid` field remains `false` and rider earnings stay in `PENDING` status indefinitely. Payment integration will be added tomorrow.
+
+---
+
+Complete Parcel Workflow
+Phase 1: Customer Creates Parcel
+API: POST /parcels (CUSTOMER only)
+
+Customer submits parcel with:
+Pickup address
+Delivery address
+District from/to
+Price
+Optional note
+System:
+Generates unique tracking ID
+Creates parcel with status = REQUESTED
+Creates status log
+No rider assigned (riderId = null)
+Phase 2: Rider Assignment (Two Ways)
+Option A: Admin Manual Assignment API: PATCH /parcels/:id/assign-rider (ADMIN, SUPER_ADMIN only)
+
+Admin selects parcel and assigns a rider
+System validates:
+Parcel status is REQUESTED
+Rider exists with ACTIVE account status
+Rider is AVAILABLE (not BUSY or OFFLINE)
+System updates:
+Parcel status → ASSIGNED
+Rider assigned to parcel
+Status log created
+Option B: Rider Self-Assignment
+
+Step 1: Browse Available Parcels
+API: GET /parcels/available (RIDER, ADMIN, SUPER_ADMIN)
+- Riders must have ACTIVE account status
+- Admins and Super Admins can access without rider account status check
+- Shows parcels with status = REQUESTED, riderId = null
+
+Step 2: Accept/Claim Parcel
+API: PATCH /parcels/:id/accept (RIDER only - ACTIVE riders)
+
+Rider accepts/claims a parcel
+System validates:
+Parcel status is REQUESTED
+Rider is ACTIVE and AVAILABLE
+Parcel not already assigned
+System updates:
+Parcel status → ASSIGNED
+Rider assigned to parcel
+Status log created
+Phase 3: Rider Views Assigned Parcels
+API: GET /parcels/assigned (RIDER only - ACTIVE riders)
+
+Rider views all parcels assigned to them
+Shows parcels with status: ASSIGNED, IN_TRANSIT
+Phase 4: Rider Picks Up Parcel
+API: PATCH /parcels/:id/pick (RIDER only - ACTIVE riders)
+
+Rider goes to pickup location
+Marks parcel as picked (auto-transits to IN_TRANSIT)
+System validates:
+Parcel is assigned to this rider
+Parcel status is ASSIGNED
+Rider is ACTIVE
+System updates:
+Parcel status → IN_TRANSIT
+Rider status → BUSY
+Status log created
+Phase 5: Rider Delivers Parcel
+API: PATCH /parcels/:id/deliver (RIDER only - ACTIVE riders)
+
+Rider completes delivery
+Marks parcel as delivered
+System validates:
+Parcel is assigned to this rider
+Parcel status is IN_TRANSIT
+Rider is ACTIVE
+System updates:
+Parcel status → DELIVERED
+Rider status → AVAILABLE
+Status log created
+Earning generated (70% of parcel price, status = PENDING)
+Phase 6: Customer Tracks Parcel
+API: GET /parcels/:id (CUSTOMER, RIDER only)
+
+Customer views parcel details
+Shows current status, rider info, status logs with timestamps
+Phase 7: Customer Views Their Parcels
+API: GET /parcels/my (CUSTOMER only)
+
+Customer views all their parcels (any status)
+Paginated list with rider info
+Phase 8: Customer Cancels Parcel
+API: PATCH /parcels/:id/cancel (CUSTOMER only)
+
+Customer can cancel only if status = REQUESTED
+System validates:
+Parcel belongs to customer
+Status is REQUESTED
+System updates:
+Parcel status → CANCELLED
+Status log created
+Admin Monitoring & Management
+View All Parcels API: GET /parcels (ADMIN, SUPER_ADMIN only)
+
+Filter by status, district, date
+Monitor all parcels across the system
+View Available Parcels API: GET /parcels/available (RIDER, ADMIN, SUPER_ADMIN)
+
+Riders: Only if ACTIVE account status
+Admins: No account status check
+Shows parcels with status = REQUESTED, riderId = null
+Override Status API: PATCH /parcels/:id/status (ADMIN, SUPER_ADMIN only)
+
+Admin can manually change any parcel status
+Creates status log
+Rider Discovery
+Browse Available Jobs API: GET /parcels/available (RIDER, ADMIN, SUPER_ADMIN)
+
+Riders see parcels they can accept
+Admins see all available parcels for assignment
+Parcel Status Flow
+REQUESTED → ASSIGNED → IN_TRANSIT → DELIVERED
+                    ↓
+                 CANCELLED
+Status Meanings:
+
+REQUESTED: Customer created parcel, waiting for rider assignment
+ASSIGNED: Rider assigned, waiting for pickup
+IN_TRANSIT: Rider picked up and is en route to delivery
+DELIVERED: Successfully delivered, earning generated
+CANCELLED: Cancelled by customer (only in REQUESTED status)
+Rider Status Flow
+AVAILABLE → BUSY → AVAILABLE
+Status Meanings:
+
+AVAILABLE: Rider can accept new parcels
+BUSY: Rider is on a delivery (after picking up parcel)
+OFFLINE: Rider not accepting deliveries
+Complete Example Flow
+Customer:
+
+POST /parcels → Creates parcel (status: REQUESTED)
+Admin (or Rider): 2. PATCH /parcels/:id/assign-rider → Assigns rider (status: ASSIGNED) OR PATCH /parcels/:id/accept → Rider accepts (status: ASSIGNED)
+
+Rider: 3. GET /parcels/assigned → Views assigned job 4. PATCH /parcels/:id/pick → Picks up parcel (status: PICKED, rider: BUSY) 5. PATCH /parcels/:id/deliver → Delivers parcel (status: DELIVERED, rider: AVAILABLE, earning generated)
+
+Customer: 6. GET /parcels/:id → Tracks parcel progress 7. GET /parcels/my → Views all parcels
+
+---
+
+## Improvements & TODO List
+
+### Critical Missing Features
+
+1. **Payment Processing** (HIGH PRIORITY)
+   - Customer payment collection on parcel creation
+   - Payment gateway integration (Stripe/Manual/BKash)
+   - Update `parcel.isPaid` to `true` when payment succeeds
+   - Prevent parcel creation if payment fails
+   - Payment webhook handling for success/failure events
+
+2. **Rider Payout System** (HIGH PRIORITY)
+   - Payout mechanism for rider earnings
+   - Update `earning.status` from PENDING to PAID when payout completes
+   - Payout scheduling (daily/weekly/manual)
+   - Payout history tracking
+   - Tax/deduction calculations
+
+3. **Payment Module** (NEW MODULE NEEDED)
+   - Create payment module with interfaces, validations, services, controllers
+   - Payment intent creation
+   - Payment confirmation handling
+   - Refund processing
+   - Transaction history
+
+### Potential Enhancements
+
+4. **Parcel Features**
+   - Add photo upload for parcel items
+   - Add parcel weight/dimensions
+   - Add parcel category/type
+   - Add estimated delivery time calculation
+   - Add real-time location tracking
+
+5. **Rider Features**
+   - Add rider rating system
+   - Add rider availability toggle (AVAILABLE/OFFLINE)
+   - Add rider earnings dashboard
+   - Add rider performance analytics
+
+6. **Customer Features**
+   - Add parcel reordering
+   - Add parcel favorite addresses
+   - Add delivery time slot selection
+   - Add parcel review/rating after delivery
+
+7. **Admin Features**
+   - Add analytics dashboard
+   - Add revenue reporting
+   - Add rider performance tracking
+   - Add customer support tools
+
+8. **Notification System**
+   - Email notifications for parcel status changes
+   - SMS notifications for critical updates
+   - Push notifications for mobile app
+   - In-app notification center
+
+9. **Security Enhancements**
+   - Rate limiting on parcel creation
+   - Fraud detection for suspicious activity
+   - Parcel cancellation policy enforcement
+   - Geofencing for pickup/delivery locations
+
+### Technical Debt
+
+10. **Code Quality**
+    - Add unit tests for all services
+    - Add integration tests for API endpoints
+    - Add E2E tests for complete workflows
+    - Improve error handling edge cases
+
+11. **Performance**
+    - Add database indexing on frequently queried fields
+    - Implement caching for frequently accessed data
+    - Optimize N+1 queries in parcel fetching
+    - Add pagination cursor support for large datasets
+
+12. **Documentation**
+    - Add API versioning strategy
+    - Add OpenAPI/Swagger specification
+    - Add deployment documentation
+    - Add troubleshooting guide
+
+---
+
+## Current API Status
+
+### ✅ Implemented
+- POST /parcels - Create parcel
+- GET /parcels/my - Get customer parcels
+- GET /parcels/:id - Get parcel by ID
+- PATCH /parcels/:id/cancel - Cancel parcel
+- GET /parcels/available - Get available parcels
+- GET /parcels/assigned - Get assigned parcels
+- PATCH /parcels/:id/assign-rider - Assign rider (admin)
+- PATCH /parcels/:id/accept - Accept parcel (rider)
+- PATCH /parcels/:id/pick - Pick up parcel
+- PATCH /parcels/:id/deliver - Deliver parcel
+- GET /parcels - Get all parcels (admin)
+- PATCH /parcels/:id/status - Override status (admin)
+
+### ❌ Not Implemented
+- Payment processing APIs
+- Payout APIs
+- Notification APIs
+- Analytics APIs
+
+---
+
+## Next Steps
+
+1. Implement payment module with Stripe/BKash integration
+2. Add payment collection on parcel creation
+3. Implement rider payout system
+4. Add notification system for status updates
+5. Build analytics dashboard for admin
+6. Add comprehensive testing suite
+7. Optimize database queries and add caching
+8. Deploy to production environment

@@ -2,15 +2,14 @@ import { Request, Response } from "express";
 import { catchAsync } from "../../../shared/catchAsync";
 import { sendResponse } from "../../../shared/sendResponse";
 import status from "http-status";
-import { getAvailableParcelsService } from "../services";
+import { getMyParcelsService } from "../services";
 import { getPaginationParams } from "../../../shared/pagination";
 
-export const getAvailableParcelsController = catchAsync(
+export const getMyParcelsController = catchAsync(
     async (req: Request, res: Response) => {
-        const userId = req.user?.userId;
-        const userRole = req.user?.role;
+        const customerId = req.user?.userId;
 
-        if (!userId) {
+        if (!customerId) {
             sendResponse(res, {
                 httpStatusCode: status.UNAUTHORIZED,
                 success: false,
@@ -19,25 +18,16 @@ export const getAvailableParcelsController = catchAsync(
             return;
         }
 
-        if (!userRole) {
-            sendResponse(res, {
-                httpStatusCode: status.UNAUTHORIZED,
-                success: false,
-                message: "User role not found"
-            });
-            return;
-        }
-
         const { page, limit } = getPaginationParams(
             req.query.page ? String(req.query.page) : undefined,
             req.query.limit ? String(req.query.limit) : undefined
         );
-        const result = await getAvailableParcelsService(userId as string, userRole, page, limit);
+        const result = await getMyParcelsService(customerId as string, page, limit);
 
         sendResponse(res, {
             httpStatusCode: status.OK,
             success: true,
-            message: "Available parcels fetched successfully",
+            message: "My parcels fetched successfully",
             data: result.data,
             meta: result.meta
         });

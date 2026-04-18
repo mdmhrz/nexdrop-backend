@@ -1,11 +1,57 @@
 import { prisma } from "../../../lib/prisma";
-import { ParcelStatus, RiderAccountStatus } from "../../../../generated/prisma/enums";
+import { ParcelStatus, RiderAccountStatus, UserRole } from "../../../../generated/prisma/enums";
 import AppError from "../../../errorHelper/AppError";
 import status from "http-status";
 
-export const getAvailableParcelsService = async (riderId: string, page: number = 1, limit: number = 10) => {
+export const getAvailableParcelsService = async (userId: string, userRole: UserRole, page: number = 1, limit: number = 10) => {
+    // If user is admin or super admin, they can view available parcels without rider account check
+    if (userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN) {
+        const skip = (page - 1) * limit;
+
+        const [parcels, total] = await Promise.all([
+            prisma.parcel.findMany({
+                where: {
+                    status: ParcelStatus.REQUESTED,
+                    riderId: null
+                },
+                include: {
+                    customer: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            phone: true
+                        }
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                skip,
+                take: limit
+            }),
+            prisma.parcel.count({
+                where: {
+                    status: ParcelStatus.REQUESTED,
+                    riderId: null
+                }
+            })
+        ]);
+
+        return {
+            data: parcels,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
+    }
+
+    // For riders, check account status
     const rider = await prisma.rider.findUnique({
-        where: { userId: riderId }
+        where: { userId: userId }
     });
 
     if (!rider) {

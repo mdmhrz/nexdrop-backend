@@ -11,3 +11,26 @@ export interface IDeliverParcelPayload {
 export interface IAcceptParcelPayload {
     note?: string;
 }
+
+export interface ICreateParcelPayload {
+    pickupAddress: string;
+    deliveryAddress: string;
+    districtFrom: string;
+    districtTo: string;
+    price: number;
+    note?: string;
+}
+
+export interface ICancelParcelPayload {
+    note?: string;
+}
+
+export interface IAssignRiderPayload {
+    riderId: string;
+    note?: string;
+}
+
+export interface IUpdateParcelStatusPayload {
+    status: ParcelStatus;
+    note?: string;
+}

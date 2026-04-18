@@ -38,7 +38,7 @@ export const pickParcelService = async (riderId: string, parcelId: string, paylo
         const updated = await tx.parcel.update({
             where: { id: parcelId },
             data: {
-                status: ParcelStatus.PICKED
+                status: ParcelStatus.IN_TRANSIT
             }
         });
 
@@ -46,7 +46,7 @@ export const pickParcelService = async (riderId: string, parcelId: string, paylo
         await tx.parcelStatusLog.create({
             data: {
                 parcelId: parcelId,
-                status: ParcelStatus.PICKED,
+                status: ParcelStatus.IN_TRANSIT,
                 changedBy: riderId,
                 note: payload.note
             }

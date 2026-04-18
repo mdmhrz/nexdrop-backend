@@ -8,6 +8,8 @@ export const getAssignedParcelsService = async (riderId: string, page: number = 
         where: { userId: riderId }
     });
 
+
+
     if (!rider) {
         throw new AppError(status.NOT_FOUND, "Rider profile not found");
     }
@@ -16,14 +18,15 @@ export const getAssignedParcelsService = async (riderId: string, page: number = 
         throw new AppError(status.FORBIDDEN, "Only active riders can view assigned parcels");
     }
 
+
     const skip = (page - 1) * limit;
 
     const [parcels, total] = await Promise.all([
         prisma.parcel.findMany({
             where: {
-                riderId: riderId,
+                riderId: rider.id,
                 status: {
-                    in: [ParcelStatus.ASSIGNED, ParcelStatus.PICKED, ParcelStatus.IN_TRANSIT]
+                    in: [ParcelStatus.ASSIGNED, ParcelStatus.IN_TRANSIT]
                 }
             },
             include: {
@@ -44,9 +47,9 @@ export const getAssignedParcelsService = async (riderId: string, page: number = 
         }),
         prisma.parcel.count({
             where: {
-                riderId: riderId,
+                riderId: rider.id,
                 status: {
-                    in: [ParcelStatus.ASSIGNED, ParcelStatus.PICKED, ParcelStatus.IN_TRANSIT]
+                    in: [ParcelStatus.ASSIGNED, ParcelStatus.IN_TRANSIT]
                 }
             }
         })
