@@ -31,3 +31,7 @@ export interface IRiderApplyResult {
         updatedAt: Date;
     };
 }
+
+export interface IUpdateRiderStatusPayload {
+    currentStatus: string;
+}
