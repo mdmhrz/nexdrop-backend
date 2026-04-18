@@ -23,9 +23,9 @@ export const loginService = async (payload: ILoginPayload) => {
     }
 
 
-    // if (data?.user?.status === UserStatus.DELETED || data?.user?.isDeleted) {
-    //     throw new AppError(status.GONE, "Your account has been deleted. Please contact support.");
-    // }
+    if (data?.user?.status === UserStatus.DELETED) {
+        throw new AppError(status.GONE, "Your account has been deleted. Please contact support.");
+    }
 
 
     const accessToken = tokenUtils.getAccessToken({
