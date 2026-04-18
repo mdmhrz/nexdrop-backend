@@ -1,17 +1,17 @@
 model UserAddress {
-  id        String   @id @default(uuid(7))
+  id String @id @default(uuid(7))
 
-  userId    String
+  userId String
 
   label     String
   address   String
   district  String
   phone     String?
-  isDefault Boolean  @default(false)
+  isDefault Boolean @default(false)
 
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isDefault])
   @@map("user_address")
