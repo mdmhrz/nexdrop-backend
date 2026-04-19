@@ -21,7 +21,7 @@ export const paymentService = {
     async initiatePayment(
         payload: IPaymentInitiatePayload
     ): Promise<IPaymentInitiateResponse> {
-        const { amount, customerEmail, customerName, paymentMethod, metadata, successUrl, cancelUrl } = payload;
+        const { amount, customerEmail, customerName, paymentMethod, metadata, successUrl, cancelUrl, currency } = payload;
 
         // Check amount
         if (amount <= 0) {
@@ -40,6 +40,7 @@ export const paymentService = {
                 successUrl,
                 cancelUrl,
                 metadata,
+                currency,
             });
 
             paymentUrl = stripeResult.url;

@@ -17,13 +17,14 @@ export const stripeService = {
         successUrl: string;
         cancelUrl: string;
         metadata: Record<string, string>;
+        currency?: string;
     }): Promise<{ url: string; sessionId: string }> {
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [
                 {
                     price_data: {
-                        currency: 'usd',
+                        currency: params.currency || 'usd',
                         product_data: {
                             name: 'Payment',
                             description: params.metadata.description || 'Payment for service',

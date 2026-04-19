@@ -61,6 +61,7 @@ export const parcelPaymentService = {
             },
             successUrl: `${envVars.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: `${envVars.FRONTEND_URL}/payment/cancel?parcel_id=${parcel.id}`,
+            currency: 'bdt',
         });
 
         // Check if payment already exists for this parcel

@@ -8,6 +8,7 @@ export interface IPaymentInitiatePayload {
     metadata: Record<string, string>; // Generic metadata for any module
     successUrl: string;
     cancelUrl: string;
+    currency?: string;
 }
 
 export interface IPaymentInitiateResponse {
