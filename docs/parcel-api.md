@@ -280,12 +280,12 @@ Cookie: better-auth.session_token=<session_token>
 **Request Body**:
 ```json
 {
-  "paymentMethod": "STRIPE | MANUAL | BKASH"
+  "paymentMethod": "STRIPE | MANUAL | BKASH | SSLCOMMERZ"
 }
 ```
 
 **Validation**:
-- `paymentMethod`: Required, must be a valid PaymentMethod enum value (STRIPE, MANUAL, or BKASH)
+- `paymentMethod`: Required, must be a valid PaymentMethod enum value (STRIPE, MANUAL, BKASH, or SSLCOMMERZ)
 
 **Success Response** (200):
 ```json
@@ -293,8 +293,8 @@ Cookie: better-auth.session_token=<session_token>
   "success": true,
   "message": "Payment initiated successfully",
   "data": {
-    "paymentUrl": "string (Stripe checkout URL)",
-    "sessionId": "string (Stripe session ID)",
+    "paymentUrl": "string (Payment gateway URL)",
+    "sessionId": "string (Payment gateway session ID)",
     "paymentId": "string (Payment record ID)",
     "amount": number,
     "metadata": {

@@ -48,6 +48,41 @@ export const parcelPaymentService = {
             throw new AppError(status.BAD_REQUEST, 'Invalid parcel price');
         }
 
+        // Check if payment already exists for this parcel
+        const existingPayment = await prisma.payment.findUnique({
+            where: { parcelId: parcel.id },
+        });
+
+        let payment;
+
+        if (existingPayment) {
+            // Update existing payment if it's PENDING or FAILED
+            if (existingPayment.status === 'PENDING' || existingPayment.status === 'FAILED') {
+                payment = await prisma.payment.update({
+                    where: { id: existingPayment.id },
+                    data: {
+                        amount: parcel.price,
+                        paymentMethod,
+                        status: 'PENDING',
+                    },
+                });
+            } else {
+                // Payment already successful
+                throw new AppError(status.BAD_REQUEST, 'Payment already completed for this parcel');
+            }
+        } else {
+            // Create new payment record BEFORE sending to payment gateway
+            payment = await prisma.payment.create({
+                data: {
+                    parcelId: parcel.id,
+                    customerId: userId,
+                    amount: parcel.price,
+                    paymentMethod,
+                    status: 'PENDING',
+                },
+            });
+        }
+
         // Call generic payment service
         const result = await paymentService.initiatePayment({
             amount: parcel.price,
@@ -64,42 +99,11 @@ export const parcelPaymentService = {
             currency: 'bdt',
         });
 
-        // Check if payment already exists for this parcel
-        const existingPayment = await prisma.payment.findUnique({
-            where: { parcelId: parcel.id },
+        // Update payment with transaction ID from gateway
+        await prisma.payment.update({
+            where: { id: payment.id },
+            data: { transactionId: result.sessionId },
         });
-
-        let payment;
-
-        if (existingPayment) {
-            // Update existing payment if it's PENDING or FAILED
-            if (existingPayment.status === 'PENDING' || existingPayment.status === 'FAILED') {
-                payment = await prisma.payment.update({
-                    where: { id: existingPayment.id },
-                    data: {
-                        amount: parcel.price,
-                        paymentMethod,
-                        transactionId: result.sessionId,
-                        status: 'PENDING',
-                    },
-                });
-            } else {
-                // Payment already successful
-                throw new AppError(status.BAD_REQUEST, 'Payment already completed for this parcel');
-            }
-        } else {
-            // Create new payment record
-            payment = await prisma.payment.create({
-                data: {
-                    parcelId: parcel.id,
-                    customerId: userId,
-                    amount: parcel.price,
-                    paymentMethod,
-                    transactionId: result.sessionId,
-                    status: 'PENDING',
-                },
-            });
-        }
 
         return {
             ...result,

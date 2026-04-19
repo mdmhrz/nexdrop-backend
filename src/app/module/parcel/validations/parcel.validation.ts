@@ -38,6 +38,6 @@ export const updateParcelStatusValidation = z.object({
 
 export const parcelPaymentValidation = z.object({
     paymentMethod: z.nativeEnum(PaymentMethod, {
-        message: "Payment method must be STRIPE, MANUAL, or BKASH"
+        message: "Payment method must be STRIPE, MANUAL, BKASH, or SSLCOMMERZ"
     })
 });

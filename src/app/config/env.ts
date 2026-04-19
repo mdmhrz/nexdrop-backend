@@ -24,8 +24,14 @@ interface EnvConfig {
     GOOGLE_CLIENT_SECRET: string;
     GOOGLE_CALLBACK_URL: string;
     FRONTEND_URL: string;
+    BACKEND_URL: string;
     STRIPE_SECRET_KEY: string;
     STRIPE_WEBHOOK_SECRET: string;
+    SSLCOMMERZ: {
+        STORE_ID: string;
+        STORE_PASSWORD: string;
+        IS_SANDBOX: boolean;
+    };
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -51,8 +57,12 @@ const loadEnvVariables = (): EnvConfig => {
         "GOOGLE_CLIENT_SECRET",
         "GOOGLE_CALLBACK_URL",
         "FRONTEND_URL",
+        "BACKEND_URL",
         "STRIPE_SECRET_KEY",
-        "STRIPE_WEBHOOK_SECRET"
+        "STRIPE_WEBHOOK_SECRET",
+        "SSLCOMMERZ_STORE_ID",
+        "SSLCOMMERZ_STORE_PASSWORD",
+        "SSLCOMMERZ_IS_SANDBOX"
     ];
 
     requiredEnvVars.forEach((varName) => {
@@ -84,8 +94,14 @@ const loadEnvVariables = (): EnvConfig => {
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as string,
         GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL as string,
         FRONTEND_URL: process.env.FRONTEND_URL as string,
+        BACKEND_URL: process.env.BACKEND_URL as string,
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY as string,
         STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET as string,
+        SSLCOMMERZ: {
+            STORE_ID: process.env.SSLCOMMERZ_STORE_ID as string,
+            STORE_PASSWORD: process.env.SSLCOMMERZ_STORE_PASSWORD as string,
+            IS_SANDBOX: process.env.SSLCOMMERZ_IS_SANDBOX === 'true',
+        },
     }
 }
 

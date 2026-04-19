@@ -42,6 +42,7 @@ enum PaymentMethod {
   STRIPE
   MANUAL
   BKASH
+  SSLCOMMERZ
 }
 
 enum EarningStatus {

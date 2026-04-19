@@ -3,6 +3,7 @@ import AppError from '../../../errorHelper/AppError';
 import { prisma } from '../../../lib/prisma';
 import { IPaymentInitiatePayload, IPaymentInitiateResponse, WebhookCallback } from '../interfaces';
 import stripeService from './stripe.service';
+import sslcommerzService from './sslcommerz.service';
 
 // Webhook callback registry
 const webhookCallbacks: Map<string, WebhookCallback> = new Map();
@@ -45,6 +46,18 @@ export const paymentService = {
 
             paymentUrl = stripeResult.url;
             sessionId = stripeResult.sessionId;
+        } else if (paymentMethod === 'SSLCOMMERZ') {
+            const sslcommerzResult = await sslcommerzService.createSession({
+                amount,
+                customerEmail,
+                customerName,
+                successUrl,
+                cancelUrl,
+                metadata,
+            });
+
+            paymentUrl = sslcommerzResult.url;
+            sessionId = sslcommerzResult.sessionId;
         } else if (paymentMethod === 'MANUAL') {
             throw new AppError(status.BAD_REQUEST, 'Manual payment not implemented yet');
         } else if (paymentMethod === 'BKASH') {
@@ -85,6 +98,38 @@ export const paymentService = {
         } else {
             console.warn(`No callback registered for payment type: ${paymentType}`);
         }
+    },
+
+    /**
+     * Handle generic webhook callback (for SSL Commerz and other providers)
+     */
+    async handleWebhookCallback(paymentType: string, metadata: Record<string, string>, amount: number): Promise<void> {
+        // Call registered callback for this payment type
+        const callback = webhookCallbacks.get(paymentType);
+        if (callback) {
+            await callback(metadata, amount);
+        } else {
+            console.warn(`No callback registered for payment type: ${paymentType}`);
+        }
+    },
+
+    /**
+     * Find payment by transaction ID
+     */
+    async findPaymentByTransactionId(transactionId: string) {
+        return await prisma.payment.findUnique({
+            where: { transactionId },
+        });
+    },
+
+    /**
+     * Update payment status
+     */
+    async updatePaymentStatus(paymentId: string, status: 'PENDING' | 'SUCCESS' | 'FAILED') {
+        return await prisma.payment.update({
+            where: { id: paymentId },
+            data: { status },
+        });
     },
 };
 
