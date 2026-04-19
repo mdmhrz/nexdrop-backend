@@ -296,12 +296,7 @@ Cookie: better-auth.session_token=<session_token>
     "paymentUrl": "string (Payment gateway URL)",
     "sessionId": "string (Payment gateway session ID)",
     "paymentId": "string (Payment record ID)",
-    "amount": number,
-    "metadata": {
-      "type": "parcel",
-      "parcelId": "string",
-      "description": "string"
-    }
+    "amount": number
   }
 }
 ```
@@ -311,14 +306,10 @@ Cookie: better-auth.session_token=<session_token>
 - Validates parcel is not already paid
 - Validates parcel status is REQUESTED
 - Validates price is valid (> 0)
-- Creates Stripe checkout session
-- Creates Payment record in DB with status PENDING
-- Returns payment URL for customer to complete payment
-
-**Error Responses**:
-- `400 Bad Request`: Parcel already paid, invalid status, or invalid price
-- `403 Forbidden`: You can only pay for your own parcels
-- `404 Not Found`: Parcel not found
+- For STRIPE: Creates Stripe checkout session
+- For SSLCOMMERZ: Creates SSL Commerz payment session
+- Saves payment record with PENDING status (before sending to gateway)
+- Returns payment URL and session ID
 - `400 Bad Request`: MANUAL or BKASH payment methods not implemented yet
 
 **Payment Flow**:
