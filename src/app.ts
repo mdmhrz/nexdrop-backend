@@ -6,6 +6,7 @@ import { globalErrorHandler } from './app/middleware/globalErrorHandler';
 import notFound from './app/middleware/notFound';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './app/lib/auth';
+import { webhookController } from './app/module/payment/controllers';
 
 
 const app: Application = express();
@@ -15,14 +16,14 @@ const app: Application = express();
 app.set("view engine", "ejs");
 app.set("views", path.resolve(process.cwd(), "src/app/templates"));
 
-
+// Stripe webhook - uses express.raw() for signature verification (must be before express.json)
+app.post('/api/v1/payments/webhook', express.raw({ type: 'application/json' }), webhookController);
 
 // Mount the authentication routes (Google OAuth, email/password, etc.)
 app.use("/api/auth", toNodeHandler(auth))
 
 // Enable URL-encoded form data parsing
 app.use(express.urlencoded({ extended: true }));
-
 
 // Middleware to parse JSON bodies
 app.use(express.json());

@@ -10,3 +10,4 @@ export * from "./cancelParcel.controller";
 export * from "./getAllParcels.controller";
 export * from "./assignRider.controller";
 export * from "./updateParcelStatus.controller";
+export * from "./initiateParcelPayment.controller";

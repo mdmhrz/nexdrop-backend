@@ -1,8 +1,8 @@
 enum UserRole {
-    SUPER_ADMIN
-    ADMIN
-    RIDER
-    CUSTOMER
+  SUPER_ADMIN
+  ADMIN
+  RIDER
+  CUSTOMER
 }
 
 enum UserStatus {

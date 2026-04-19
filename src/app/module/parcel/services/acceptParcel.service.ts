@@ -37,6 +37,10 @@ export const acceptParcelService = async (riderId: string, parcelId: string, pay
         throw new AppError(status.BAD_REQUEST, "Parcel must be in REQUESTED status to accept");
     }
 
+    if (!parcel.isPaid) {
+        throw new AppError(status.BAD_REQUEST, "Parcel must be paid before accepting");
+    }
+
     const updatedParcel = await prisma.$transaction(async (tx) => {
         // Update parcel status and assign rider
         const updated = await tx.parcel.update({

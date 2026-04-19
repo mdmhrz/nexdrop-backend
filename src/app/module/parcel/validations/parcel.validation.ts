@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ParcelStatus } from "../../../../generated/prisma/enums";
+import { ParcelStatus, PaymentMethod } from "../../../../generated/prisma/enums";
 
 export const pickParcelValidation = z.object({
     note: z.string().optional()
@@ -34,4 +34,10 @@ export const assignRiderValidation = z.object({
 export const updateParcelStatusValidation = z.object({
     status: z.nativeEnum(ParcelStatus),
     note: z.string().optional()
+});
+
+export const parcelPaymentValidation = z.object({
+    paymentMethod: z.nativeEnum(PaymentMethod, {
+        message: "Payment method must be STRIPE, MANUAL, or BKASH"
+    })
 });

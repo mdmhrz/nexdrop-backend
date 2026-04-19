@@ -10,3 +10,4 @@ export * from "./cancelParcel.service";
 export * from "./getAllParcels.service";
 export * from "./assignRider.service";
 export * from "./updateParcelStatus.service";
+export * from "./parcelPayment.service";

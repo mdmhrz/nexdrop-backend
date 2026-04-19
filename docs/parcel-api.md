@@ -261,6 +261,79 @@ Cookie: better-auth.session_token=<session_token>
 
 ---
 
+### Phase 3.5: Customer Initiates Payment
+
+#### POST /parcels/:id/payment
+Initiate payment for a parcel using Stripe (only parcels in REQUESTED status can be paid for).
+
+**Authentication**: Required (CUSTOMER only)
+
+**Headers**:
+```
+Authorization: Bearer <access_token>
+Cookie: better-auth.session_token=<session_token>
+```
+
+**Path Parameters**:
+- `id` (required): Parcel ID
+
+**Request Body**:
+```json
+{
+  "paymentMethod": "STRIPE | MANUAL | BKASH"
+}
+```
+
+**Validation**:
+- `paymentMethod`: Required, must be a valid PaymentMethod enum value (STRIPE, MANUAL, or BKASH)
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "message": "Payment initiated successfully",
+  "data": {
+    "paymentUrl": "string (Stripe checkout URL)",
+    "sessionId": "string (Stripe session ID)",
+    "paymentId": "string (Payment record ID)",
+    "amount": number,
+    "metadata": {
+      "type": "parcel",
+      "parcelId": "string",
+      "description": "string"
+    }
+  }
+}
+```
+
+**What happens internally**:
+- Validates parcel exists and belongs to customer
+- Validates parcel is not already paid
+- Validates parcel status is REQUESTED
+- Validates price is valid (> 0)
+- Creates Stripe checkout session
+- Creates Payment record in DB with status PENDING
+- Returns payment URL for customer to complete payment
+
+**Error Responses**:
+- `400 Bad Request`: Parcel already paid, invalid status, or invalid price
+- `403 Forbidden`: You can only pay for your own parcels
+- `404 Not Found`: Parcel not found
+- `400 Bad Request`: MANUAL or BKASH payment methods not implemented yet
+
+**Payment Flow**:
+1. Customer initiates payment via this endpoint
+2. Redirected to Stripe checkout URL
+3. Completes payment on Stripe
+4. Stripe sends webhook to `/payment/webhook`
+5. Webhook updates Payment status to SUCCESS
+6. Parcel `isPaid` set to true
+7. If rider assigned, creates Earning record (70% of parcel price)
+
+**Purpose**: Customer pays for parcel delivery before rider pickup
+
+---
+
 ### Phase 4: Rider Views Assigned Parcels
 
 #### GET /parcels/assigned
@@ -833,14 +906,18 @@ AVAILABLE → BUSY → AVAILABLE
    OR
    PATCH `/parcels/:id/accept` → Rider accepts (status: ASSIGNED)
 
+**Customer**:
+3. POST `/parcels/:id/payment` → Initiates payment (creates Payment record, returns Stripe URL)
+4. Completes payment on Stripe → Webhook updates Payment to SUCCESS, sets Parcel.isPaid = true
+
 **Rider**:
-3. GET `/parcels/assigned` → Views assigned job
-4. PATCH `/parcels/:id/pick` → Picks up parcel (status: PICKED, rider: BUSY)
-5. PATCH `/parcels/:id/deliver` → Delivers parcel (status: DELIVERED, rider: AVAILABLE, earning generated)
+5. GET `/parcels/assigned` → Views assigned job
+6. PATCH `/parcels/:id/pick` → Picks up parcel (status: IN_TRANSIT, rider: BUSY)
+7. PATCH `/parcels/:id/deliver` → Delivers parcel (status: DELIVERED, rider: AVAILABLE, earning generated)
 
 **Customer**:
-6. GET `/parcels/:id` → Tracks parcel progress
-7. GET `/parcels/my` → Views all parcels
+8. GET `/parcels/:id` → Tracks parcel progress
+9. GET `/parcels/my` → Views all parcels
 
 ---
 

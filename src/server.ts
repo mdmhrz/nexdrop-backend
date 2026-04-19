@@ -1,6 +1,7 @@
 import app from './app';
 import { Server } from "http";
 import { envVars } from './app/config/env';
+import './app/module/parcel/parcel.init';
 
 let server: Server;
 

@@ -11,7 +11,8 @@ import {
     cancelParcelController,
     getAllParcelsController,
     assignRiderController,
-    updateParcelStatusController
+    updateParcelStatusController,
+    initiateParcelPaymentController
 } from "./controllers";
 import { checkAuth } from "../../middleware/checkAuth";
 import { UserRole } from "../../../generated/prisma/enums";
@@ -23,7 +24,8 @@ import {
     createParcelValidation,
     cancelParcelValidation,
     assignRiderValidation,
-    updateParcelStatusValidation
+    updateParcelStatusValidation,
+    parcelPaymentValidation
 } from "./validations";
 
 const router = Router();
@@ -73,6 +75,14 @@ router.patch(
     checkAuth(UserRole.CUSTOMER),
     validateRequest(cancelParcelValidation),
     cancelParcelController
+);
+
+// POST /parcels/:id/payment - Initiate payment for a parcel (Customer Only)
+router.post(
+    '/:id/payment',
+    checkAuth(UserRole.CUSTOMER),
+    validateRequest(parcelPaymentValidation),
+    initiateParcelPaymentController
 );
 
 // PATCH /parcels/:id/assign-rider - Assign a rider to a parcel (Admin & Super Admin Only)

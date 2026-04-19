@@ -21,6 +21,10 @@ export const assignRiderService = async (parcelId: string, payload: IAssignRider
         throw new AppError(status.BAD_REQUEST, "Parcel is already assigned to a rider");
     }
 
+    if (!parcel.isPaid) {
+        throw new AppError(status.BAD_REQUEST, "Parcel must be paid before assigning a rider");
+    }
+
     const rider = await prisma.rider.findUnique({
         where: { id: payload.riderId }
     });
