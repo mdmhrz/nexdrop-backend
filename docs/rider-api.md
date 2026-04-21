@@ -190,6 +190,325 @@ Cookie: better-auth.session_token=<session_token>
 
 ---
 
+### GET /rider/earnings/me
+Get current rider's earnings summary (dashboard view).
+
+**Authentication**: Required (RIDER only)
+
+**Headers**:
+```
+Authorization: Bearer <access_token>
+Cookie: better-auth.session_token=<session_token>
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "message": "Current earnings fetched successfully",
+  "data": {
+    "totalAvailable": 3000,
+    "recentEarnings": [
+      {
+        "id": "string",
+        "riderId": "string",
+        "parcelId": "string",
+        "amount": 600,
+        "percentage": 70,
+        "status": "PENDING",
+        "createdAt": "datetime",
+        "parcel": {
+          "id": "string",
+          "trackingId": "string",
+          "price": 600,
+          "customer": {
+            "id": "string",
+            "name": "string",
+            "email": "string"
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+**Error Responses**:
+- `401 Unauthorized`: Invalid or missing authentication
+- `404 Not Found`: Rider profile not found
+
+---
+
+### GET /rider/earnings/history
+Get rider's earnings history with filtering and sorting.
+
+**Authentication**: Required (RIDER only)
+
+**Headers**:
+```
+Authorization: Bearer <access_token>
+Cookie: better-auth.session_token=<session_token>
+```
+
+**Query Parameters**:
+- `page`: Page number (default: 1)
+- `limit`: Items per page (default: 10)
+- `status`: Filter by status (PENDING, PAID, or ALL for all)
+- `startDate`: Filter by start date (ISO date string)
+- `endDate`: Filter by end date (ISO date string)
+- `search`: Search by parcel tracking ID
+- `sortBy`: Sort field (createdAt, amount, etc.)
+- `sortOrder`: Sort order (asc, desc) - default: desc
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "message": "Earnings history fetched successfully",
+  "data": [
+    {
+      "id": "string",
+      "riderId": "string",
+      "parcelId": "string",
+      "amount": 600,
+      "percentage": 70,
+      "status": "PENDING | PAID",
+      "createdAt": "datetime",
+      "parcel": {
+        "id": "string",
+        "trackingId": "string",
+        "price": 600,
+        "customer": {
+          "id": "string",
+          "name": "string",
+          "email": "string"
+        }
+      }
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 20,
+    "totalPages": 2,
+    "totalAmount": 12000
+  }
+}
+```
+
+**Error Responses**:
+- `401 Unauthorized`: Invalid or missing authentication
+- `404 Not Found`: Rider profile not found
+
+---
+
+### POST /rider/cashouts/request
+Request a cashout for available earnings.
+
+**Authentication**: Required (RIDER only)
+
+**Headers**:
+```
+Authorization: Bearer <access_token>
+Cookie: better-auth.session_token=<session_token>
+```
+
+**Request Body**:
+```json
+{
+  "amount": 1000
+}
+```
+
+**Validation**:
+- `amount`: Required, number, minimum 1, maximum 100000
+
+**Success Response** (201):
+```json
+{
+  "success": true,
+  "message": "Cashout request submitted successfully",
+  "data": {
+    "id": "string",
+    "riderId": "string",
+    "amount": 1000,
+    "status": "PENDING",
+    "requestedAt": "datetime",
+    "processedAt": null
+  }
+}
+```
+
+**Error Responses**:
+- `400 Bad Request`: Insufficient balance or invalid amount
+- `401 Unauthorized`: Invalid or missing authentication
+- `404 Not Found`: Rider profile not found
+
+**Note**: The cashout amount must not exceed the rider's available pending earnings.
+
+---
+
+### GET /rider/cashouts/me
+Get rider's cashout history with filtering.
+
+**Authentication**: Required (RIDER only)
+
+**Headers**:
+```
+Authorization: Bearer <access_token>
+Cookie: better-auth.session_token=<session_token>
+```
+
+**Query Parameters**:
+- `page`: Page number (default: 1)
+- `limit`: Items per page (default: 10)
+- `status`: Filter by status (PENDING, APPROVED, REJECTED, PAID, or ALL for all)
+- `startDate`: Filter by start date (ISO date string)
+- `endDate`: Filter by end date (ISO date string)
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "message": "Cashouts fetched successfully",
+  "data": [
+    {
+      "id": "string",
+      "riderId": "string",
+      "amount": 1000,
+      "status": "PENDING | APPROVED | REJECTED | PAID",
+      "requestedAt": "datetime",
+      "processedAt": "datetime | null"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 5,
+    "totalPages": 1
+  }
+}
+```
+
+**Error Responses**:
+- `401 Unauthorized`: Invalid or missing authentication
+- `404 Not Found`: Rider profile not found
+
+---
+
+## Admin Cashout Management
+
+### GET /cashouts
+Get all cashouts with filtering (Admin only).
+
+**Authentication**: Required (ADMIN and SUPER_ADMIN only)
+
+**Headers**:
+```
+Authorization: Bearer <access_token>
+Cookie: better-auth.session_token=<session_token>
+```
+
+**Query Parameters**:
+- `page`: Page number (default: 1)
+- `limit`: Items per page (default: 10)
+- `status`: Filter by status (PENDING, APPROVED, REJECTED, PAID, or ALL for all)
+- `startDate`: Filter by start date (ISO date string)
+- `endDate`: Filter by end date (ISO date string)
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "message": "All cashouts fetched successfully",
+  "data": [
+    {
+      "id": "string",
+      "riderId": "string",
+      "amount": 1000,
+      "status": "PENDING | APPROVED | REJECTED | PAID",
+      "requestedAt": "datetime",
+      "processedAt": "datetime | null",
+      "rider": {
+        "id": "string",
+        "userId": "string",
+        "district": "string",
+        "accountStatus": "ACTIVE",
+        "currentStatus": "AVAILABLE",
+        "user": {
+          "id": "string",
+          "name": "string",
+          "email": "string"
+        }
+      }
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 25,
+    "totalPages": 3
+  }
+}
+```
+
+**Error Responses**:
+- `401 Unauthorized`: Invalid or missing authentication
+- `403 Forbidden`: User does not have admin privileges
+
+---
+
+### PATCH /cashouts/:id
+Update cashout status (approve or reject) (Admin only).
+
+**Authentication**: Required (ADMIN and SUPER_ADMIN only)
+
+**Headers**:
+```
+Authorization: Bearer <access_token>
+Cookie: better-auth.session_token=<session_token>
+```
+
+**Request Body**:
+```json
+{
+  "status": "APPROVED | REJECTED"
+}
+```
+
+**Validation**:
+- `status`: Required, must be one of: APPROVED, REJECTED
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "message": "Cashout approved successfully",
+  "data": {
+    "id": "string",
+    "riderId": "string",
+    "amount": 1000,
+    "status": "APPROVED",
+    "requestedAt": "datetime",
+    "processedAt": "datetime"
+  }
+}
+```
+
+**Error Responses**:
+- `400 Bad Request`: Only pending cashouts can be updated
+- `401 Unauthorized`: Invalid or missing authentication
+- `403 Forbidden`: User does not have admin privileges
+- `404 Not Found`: Cashout not found
+
+**Note**:
+- Only cashouts with PENDING status can be updated
+- When status is set to APPROVED, associated earnings are automatically marked as PAID
+- When status is set to REJECTED, earnings remain as PENDING
+- The processedAt timestamp is set automatically when status is updated
+
+---
+
 ## Rider Account Status
 
 - `PENDING`: Rider application is under review
