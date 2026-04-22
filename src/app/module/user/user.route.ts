@@ -7,7 +7,8 @@ import {
     getUserByIdController,
     updateUserRoleController,
     updateUserStatusController,
-    updateMyProfileController
+    updateMyProfileController,
+    getUserDashboardController
 } from "./controllers";
 import {
     updateUserRoleValidation,
@@ -22,6 +23,13 @@ router.get(
     '/',
     checkAuth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
     getUsersController
+);
+
+// GET /users/dashboard - Customer Dashboard (CUSTOMER only)
+router.get(
+    '/dashboard',
+    checkAuth(UserRole.CUSTOMER),
+    getUserDashboardController
 );
 
 // GET /users/:id - Admin only

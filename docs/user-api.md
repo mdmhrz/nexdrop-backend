@@ -203,6 +203,105 @@ Update current user's own profile (All authenticated users).
 
 ---
 
+### GET /users/dashboard
+Get comprehensive customer dashboard with overview stats, charts data.
+
+**Authentication**: Required (CUSTOMER only)
+
+**Headers**:
+```
+Authorization: Bearer <access_token>
+Cookie: better-auth.session_token=<session_token>
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "message": "User dashboard fetched successfully",
+  "data": {
+    "overview": {
+      "totalParcels": 50,
+      "totalSpent": 15000,
+      "activeParcels": 3,
+      "deliveredParcels": 47,
+      "avgDeliveryTime": 2.5,
+      "todayParcels": 2,
+      "thisWeekParcels": 8,
+      "thisMonthParcels": 25
+    },
+    "barChart": {
+      "title": "Spending & Parcels (Last 7 Days)",
+      "data": [
+        {
+          "date": "2024-04-17",
+          "spent": 2000,
+          "parcels": 5
+        },
+        {
+          "date": "2024-04-18",
+          "spent": 1500,
+          "parcels": 4
+        },
+        {
+          "date": "2024-04-19",
+          "spent": 3000,
+          "parcels": 8
+        },
+        {
+          "date": "2024-04-20",
+          "spent": 1000,
+          "parcels": 2
+        },
+        {
+          "date": "2024-04-21",
+          "spent": 2500,
+          "parcels": 6
+        },
+        {
+          "date": "2024-04-22",
+          "spent": 2000,
+          "parcels": 5
+        },
+        {
+          "date": "2024-04-23",
+          "spent": 3000,
+          "parcels": 7
+        }
+      ]
+    },
+    "pieChart": {
+      "title": "Parcel Status Distribution",
+      "data": [
+        {
+          "status": "DELIVERED",
+          "count": 47
+        },
+        {
+          "status": "IN_TRANSIT",
+          "count": 2
+        },
+        {
+          "status": "PICKED_UP",
+          "count": 1
+        }
+      ]
+    }
+  }
+}
+```
+
+**Error Responses**:
+- `401 Unauthorized`: Invalid or missing authentication
+- `403 Forbidden`: User does not have customer role
+
+**Note**:
+- `avgDeliveryTime` is in hours, calculated from the first status log to delivery status
+- Bar chart shows spending and parcel count for the last 7 days
+- Pie chart shows distribution of all parcels by status
+
+---
+
 ## User Roles
 
 - `CUSTOMER`: Regular customer user

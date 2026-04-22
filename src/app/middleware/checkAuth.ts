@@ -68,6 +68,7 @@ export const checkAuth = (...authRoles: UserRole[]) => {
 
 
                     if (authRoles.length > 0 && !authRoles.includes(user.role as UserRole)) {
+                        console.log("User role:", user.role, "Required roles:", authRoles);
                         throw new AppError(status.FORBIDDEN, "You are not authorized to access this resource");
                     }
 

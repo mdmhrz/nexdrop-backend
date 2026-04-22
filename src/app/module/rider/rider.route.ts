@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { riderApplyController, getRiderMeController, updateRiderStatusController, getCurrentEarningsController, getEarningsHistoryController, requestCashoutController, getMyCashoutsController, getAllCashoutsController, updateCashoutStatusController } from "./controllers";
+import { riderApplyController, getRiderMeController, updateRiderStatusController, getCurrentEarningsController, getEarningsHistoryController, requestCashoutController, getMyCashoutsController, getAllCashoutsController, updateCashoutStatusController, getRiderDashboardController } from "./controllers";
 import { optionalAuth } from "../../middleware/optionalAuth";
 import { checkAuth } from "../../middleware/checkAuth";
 
@@ -22,6 +22,13 @@ router.get(
     '/me',
     checkAuth(UserRole.RIDER, UserRole.CUSTOMER),
     getRiderMeController
+);
+
+// GET /rider/dashboard - Rider Dashboard (Active Rider Only)
+router.get(
+    '/dashboard',
+    checkAuth(UserRole.RIDER),
+    getRiderDashboardController
 );
 
 // PATCH /rider/status - Rider Self Control (Active Rider Only)

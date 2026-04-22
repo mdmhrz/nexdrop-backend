@@ -144,6 +144,106 @@ Cookie: better-auth.session_token=<session_token>
 
 ---
 
+### GET /rider/dashboard
+Get comprehensive rider dashboard with overview stats, charts data.
+
+**Authentication**: Required (RIDER only)
+
+**Headers**:
+```
+Authorization: Bearer <access_token>
+Cookie: better-auth.session_token=<session_token>
+```
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "message": "Rider dashboard fetched successfully",
+  "data": {
+    "overview": {
+      "totalDeliveries": 150,
+      "totalEarnings": 45000,
+      "availableEarnings": 3000,
+      "rating": 4.5,
+      "totalRatings": 50,
+      "avgDeliveryTime": 2.5,
+      "todayDeliveries": 5,
+      "thisWeekDeliveries": 35,
+      "thisMonthDeliveries": 120
+    },
+    "barChart": {
+      "title": "Earnings & Deliveries (Last 7 Days)",
+      "data": [
+        {
+          "date": "2024-04-17",
+          "earnings": 5000,
+          "deliveries": 8
+        },
+        {
+          "date": "2024-04-18",
+          "earnings": 4500,
+          "deliveries": 7
+        },
+        {
+          "date": "2024-04-19",
+          "earnings": 6000,
+          "deliveries": 10
+        },
+        {
+          "date": "2024-04-20",
+          "earnings": 3000,
+          "deliveries": 5
+        },
+        {
+          "date": "2024-04-21",
+          "earnings": 5500,
+          "deliveries": 9
+        },
+        {
+          "date": "2024-04-22",
+          "earnings": 4000,
+          "deliveries": 6
+        },
+        {
+          "date": "2024-04-23",
+          "earnings": 7000,
+          "deliveries": 12
+        }
+      ]
+    },
+    "pieChart": {
+      "title": "Delivery Status Distribution",
+      "data": [
+        {
+          "status": "DELIVERED",
+          "count": 150
+        },
+        {
+          "status": "IN_TRANSIT",
+          "count": 5
+        },
+        {
+          "status": "PICKED_UP",
+          "count": 3
+        }
+      ]
+    }
+  }
+}
+```
+
+**Error Responses**:
+- `401 Unauthorized`: Invalid or missing authentication
+- `404 Not Found`: Rider profile not found
+
+**Note**:
+- `avgDeliveryTime` is in hours, calculated from the first status log to delivery status
+- Bar chart shows earnings and delivery count for the last 7 days
+- Pie chart shows distribution of all parcels assigned to the rider by status
+
+---
+
 ### PATCH /rider/status
 Update rider's current status (Active riders only).
 
