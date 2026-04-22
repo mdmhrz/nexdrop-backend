@@ -6,6 +6,7 @@ import AppError from "../../../errorHelper/AppError";
 import status from "http-status";
 
 export const submitRatingService = async (customerId: string, data: SubmitRatingInput) => {
+ 
   // Check if parcel exists and belongs to customer
   const parcel = await prisma.parcel.findUnique({
     where: { id: data.parcelId },

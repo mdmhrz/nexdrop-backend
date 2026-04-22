@@ -21,9 +21,9 @@ Cookie: better-auth.session_token=<session_token>
 **Request Body**:
 ```json
 {
-  "parcelId": "string (uuid)",
-  "rating": "number (1-5)",
-  "comment": "string (optional, max 500 characters)"
+  "parcelId": "019da6e0-2d4d-76a9-9361-4767d6b4b38d",
+  "rating": 5,
+  "comment": "Great service!"
 }
 ```
 
@@ -58,7 +58,7 @@ Cookie: better-auth.session_token=<session_token>
 
 ---
 
-### GET /rider/:riderId/ratings
+### GET /rider/:riderId
 Get paginated list of ratings for a specific rider.
 
 **Authentication**: Not required (PUBLIC)
@@ -100,7 +100,7 @@ Get paginated list of ratings for a specific rider.
 
 ---
 
-### GET /rider/:riderId/rating-summary
+### GET /rider/:riderId/summary
 Get rating summary for a specific rider.
 
 **Authentication**: Not required (PUBLIC)

@@ -22,11 +22,11 @@ router.post(
   submitRatingController
 );
 
-// GET /api/v1/rider/:id/ratings - Get rider's ratings (PUBLIC)
-router.get('/rider/:riderId/ratings', getRiderRatingsController);
+// GET /api/v1/ratings/rider/:riderId - Get rider's ratings (PUBLIC)
+router.get('/rider/:riderId', getRiderRatingsController);
 
-// GET /api/v1/rider/:id/rating-summary - Get rating summary (PUBLIC)
-router.get('/rider/:riderId/rating-summary', getRatingSummaryController);
+// GET /api/v1/ratings/rider/:riderId/summary - Get rating summary (PUBLIC)
+router.get('/rider/:riderId/summary', getRatingSummaryController);
 
 // PATCH /api/v1/ratings/:id - Edit rating (CUSTOMER only, within 24h)
 router.patch(
