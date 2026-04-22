@@ -1,30 +1,31 @@
 model Parcel {
-  id              String        @id @default(uuid(7))
-  trackingId      String        @unique
+  id         String @id @default(uuid(7))
+  trackingId String @unique
 
-  customerId      String
-  riderId         String?
+  customerId String
+  riderId    String?
 
   pickupAddress   String
   deliveryAddress String
 
-  districtFrom    String
-  districtTo      String
+  districtFrom String
+  districtTo   String
 
-  status          ParcelStatus  @default(REQUESTED)
+  status ParcelStatus @default(REQUESTED)
 
-  price           Float
-  isPaid          Boolean       @default(false)
+  price  Float
+  isPaid Boolean @default(false)
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  customer        User          @relation("CustomerParcels", fields: [customerId], references: [id])
-  rider           Rider?        @relation(fields: [riderId], references: [id])
+  customer User   @relation("CustomerParcels", fields: [customerId], references: [id])
+  rider    Rider? @relation(fields: [riderId], references: [id])
 
-  statusLogs      ParcelStatusLog[]
-  payment         Payment?
-  earning         Earning?
+  statusLogs ParcelStatusLog[]
+  payment    Payment?
+  earning    Earning?
+  ratings    RiderRating[]     @relation("ParcelRatings")
 
   @@index([customerId])
   @@index([riderId])
@@ -33,17 +34,17 @@ model Parcel {
 }
 
 model ParcelStatusLog {
-  id          String      @id @default(uuid(7))
+  id String @id @default(uuid(7))
 
-  parcelId    String
-  status      ParcelStatus
-  changedBy   String
-  note        String?
+  parcelId  String
+  status    ParcelStatus
+  changedBy String
+  note      String?
 
-  timestamp   DateTime    @default(now())
+  timestamp DateTime @default(now())
 
-  parcel      Parcel      @relation(fields: [parcelId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [changedBy], references: [id])
+  parcel Parcel @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [changedBy], references: [id])
 
   @@map("parcel_status_log")
 }

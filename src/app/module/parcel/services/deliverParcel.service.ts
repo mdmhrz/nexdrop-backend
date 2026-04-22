@@ -3,6 +3,7 @@ import AppError from "../../../errorHelper/AppError";
 import status from "http-status";
 import { IDeliverParcelPayload } from "../interfaces/parcel.interface";
 import { ParcelStatus, RiderStatus, RiderAccountStatus, EarningStatus } from "../../../../generated/prisma/enums";
+import { updateStatsCache, getStatsCache } from "../../../shared/services/statsCache.service";
 
 export const deliverParcelService = async (riderId: string, parcelId: string, payload: IDeliverParcelPayload) => {
     const rider = await prisma.rider.findUnique({
@@ -76,6 +77,37 @@ export const deliverParcelService = async (riderId: string, parcelId: string, pa
 
         return updated;
     });
+
+    // Update stats cache (parcel delivered)
+    await updateStatsCache({
+        totalCompletedParcels: { increment: 1 },
+    });
+
+    // Calculate delivery time and update performance metrics
+    const parcelLogs = await prisma.parcelStatusLog.findMany({
+        where: { parcelId },
+        orderBy: { timestamp: 'asc' }
+    });
+
+    if (parcelLogs.length >= 2) {
+        const pickupTime = parcelLogs.find(log => log.status === ParcelStatus.IN_TRANSIT)?.timestamp;
+        const deliveredTime = parcelLogs.find(log => log.status === ParcelStatus.DELIVERED)?.timestamp;
+
+        if (pickupTime && deliveredTime) {
+            const deliveryTimeHours = (deliveredTime.getTime() - pickupTime.getTime()) / (1000 * 60 * 60);
+
+            // Update average delivery time (simple moving average)
+            const cache = await getStatsCache();
+            const newAvg = (cache.avgDeliveryTime * (cache.totalCompletedParcels - 1) + deliveryTimeHours) / cache.totalCompletedParcels;
+            await updateStatsCache({ avgDeliveryTime: newAvg });
+        }
+    }
+
+    // Calculate and update delivery success rate
+    const totalParcels = await prisma.parcel.count();
+    const cancelledParcels = await prisma.parcel.count({ where: { status: ParcelStatus.CANCELLED } });
+    const successRate = totalParcels > 0 ? ((totalParcels - cancelledParcels) / totalParcels) * 100 : 0;
+    await updateStatsCache({ deliverySuccessRate: successRate });
 
     return updatedParcel;
 };

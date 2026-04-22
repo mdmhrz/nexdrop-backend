@@ -4,6 +4,7 @@ import { auth } from "../../../lib/auth";
 import { prisma } from "../../../lib/prisma";
 import { tokenUtils } from "../../../utils/token";
 import { IRegisterPayload } from "../interfaces/auth.interface";
+import { updateStatsCache } from "../../../shared/services/statsCache.service";
 
 
 
@@ -30,6 +31,15 @@ const registerService = async (payload: IRegisterPayload) => {
     if (!data.user) {
         throw new AppError(status.BAD_REQUEST, "Failed to register user");
     }
+
+    // Update stats cache
+    await updateStatsCache({
+        totalUsers: { increment: 1 },
+        totalCustomers: { increment: 1 },
+        newUsersToday: { increment: 1 },
+        newUsersThisWeek: { increment: 1 },
+        newUsersThisMonth: { increment: 1 },
+    });
 
     const accessToken = tokenUtils.getAccessToken({
         userId: data.user.id,

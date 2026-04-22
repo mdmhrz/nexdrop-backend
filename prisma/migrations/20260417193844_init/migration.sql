@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'RIDER', 'CUSTOMER');
 
@@ -17,7 +20,7 @@ CREATE TYPE "RiderAccountStatus" AS ENUM ('PENDING', 'ACTIVE', 'SUSPENDED');
 CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED');
 
 -- CreateEnum
-CREATE TYPE "PaymentMethod" AS ENUM ('STRIPE', 'MANUAL', 'BKASH');
+CREATE TYPE "PaymentMethod" AS ENUM ('STRIPE', 'MANUAL', 'BKASH', 'SSLCOMMERZ');
 
 -- CreateEnum
 CREATE TYPE "EarningStatus" AS ENUM ('PENDING', 'PAID');
@@ -205,8 +208,31 @@ CREATE TABLE "rider" (
 CREATE TABLE "stats_cache" (
     "id" TEXT NOT NULL,
     "totalParcels" INTEGER NOT NULL DEFAULT 0,
+    "totalPendingParcels" INTEGER NOT NULL DEFAULT 0,
+    "totalCompletedParcels" INTEGER NOT NULL DEFAULT 0,
     "totalUsers" INTEGER NOT NULL DEFAULT 0,
     "totalRevenue" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "dailyRevenue" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "weeklyRevenue" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "monthlyRevenue" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "dailyParcels" INTEGER NOT NULL DEFAULT 0,
+    "weeklyParcels" INTEGER NOT NULL DEFAULT 0,
+    "monthlyParcels" INTEGER NOT NULL DEFAULT 0,
+    "activeRiders" INTEGER NOT NULL DEFAULT 0,
+    "onlineRiders" INTEGER NOT NULL DEFAULT 0,
+    "totalRiders" INTEGER NOT NULL DEFAULT 0,
+    "topRiderId" TEXT,
+    "activeCustomers" INTEGER NOT NULL DEFAULT 0,
+    "totalCustomers" INTEGER NOT NULL DEFAULT 0,
+    "avgDeliveryTime" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "deliverySuccessRate" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "avgOrderValue" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "platformRevenue" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "riderPayouts" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "pendingPayouts" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "newUsersToday" INTEGER NOT NULL DEFAULT 0,
+    "newUsersThisWeek" INTEGER NOT NULL DEFAULT 0,
+    "newUsersThisMonth" INTEGER NOT NULL DEFAULT 0,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "stats_cache_pkey" PRIMARY KEY ("id")
@@ -310,3 +336,4 @@ ALTER TABLE "cashout" ADD CONSTRAINT "cashout_riderId_fkey" FOREIGN KEY ("riderI
 
 -- AddForeignKey
 ALTER TABLE "rider" ADD CONSTRAINT "rider_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+

@@ -26,7 +26,7 @@ export const updateParcelStatusController = catchAsync(
             note: validatedPayload.note
         };
 
-        const parcel = await updateParcelStatusService(parcelId, payload, adminId as string);
+        const parcel = await updateParcelStatusService(parcelId as string, payload, adminId as string);
 
         sendResponse(res, {
             httpStatusCode: status.OK,

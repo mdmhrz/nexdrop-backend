@@ -1,0 +1,22 @@
+model RiderRating {
+  id String @id @default(uuid(7))
+
+  riderId    String
+  customerId String
+  parcelId   String
+
+  rating  Int // 1-5 stars
+  comment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rider    Rider  @relation("RiderRatings", fields: [riderId], references: [id], onDelete: Cascade)
+  customer User   @relation("CustomerRatings", fields: [customerId], references: [id], onDelete: Cascade)
+  parcel   Parcel @relation("ParcelRatings", fields: [parcelId], references: [id], onDelete: Cascade)
+
+  @@unique([parcelId, customerId])
+  @@index([riderId])
+  @@index([parcelId])
+  @@map("rider_rating")
+}

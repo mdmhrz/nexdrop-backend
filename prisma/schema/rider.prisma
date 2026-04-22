@@ -1,23 +1,25 @@
 model Rider {
-  id               String              @id @default(uuid(7))
-  userId           String              @unique
+  id     String @id @default(uuid(7))
+  userId String @unique
 
-  district         String
+  district String
 
-  accountStatus    RiderAccountStatus  @default(PENDING)
-  currentStatus    RiderStatus         @default(AVAILABLE)
+  accountStatus RiderAccountStatus @default(PENDING)
+  currentStatus RiderStatus        @default(AVAILABLE)
 
-  rating           Float               @default(0)
-  totalDeliveries  Int                 @default(0)
+  rating          Float @default(0)
+  totalRatings    Int   @default(0)
+  totalDeliveries Int   @default(0)
 
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  parcels          Parcel[]
-  earnings         Earning[]
-  cashouts         Cashout[]
+  parcels  Parcel[]
+  earnings Earning[]
+  cashouts Cashout[]
+  ratings  RiderRating[] @relation("RiderRatings")
 
   @@index([accountStatus])
   @@index([currentStatus])

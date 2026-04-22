@@ -459,7 +459,7 @@ Cookie: better-auth.session_token=<session_token>
 ---
 
 ### PATCH /cashouts/:id
-Update cashout status (approve or reject) (Admin only).
+Update cashout status (Admin only).
 
 **Authentication**: Required (ADMIN and SUPER_ADMIN only)
 
@@ -472,23 +472,23 @@ Cookie: better-auth.session_token=<session_token>
 **Request Body**:
 ```json
 {
-  "status": "APPROVED | REJECTED"
+  "status": "APPROVED | REJECTED | PAID"
 }
 ```
 
 **Validation**:
-- `status`: Required, must be one of: APPROVED, REJECTED
+- `status`: Required, must be a valid CashoutStatus enum value
 
 **Success Response** (200):
 ```json
 {
   "success": true,
-  "message": "Cashout approved successfully",
+  "message": "Cashout status updated successfully",
   "data": {
     "id": "string",
     "riderId": "string",
     "amount": 1000,
-    "status": "APPROVED",
+    "status": "APPROVED | REJECTED | PAID",
     "requestedAt": "datetime",
     "processedAt": "datetime"
   }
@@ -496,16 +496,22 @@ Cookie: better-auth.session_token=<session_token>
 ```
 
 **Error Responses**:
-- `400 Bad Request`: Only pending cashouts can be updated
+- `400 Bad Request`: Invalid status transition
 - `401 Unauthorized`: Invalid or missing authentication
 - `403 Forbidden`: User does not have admin privileges
 - `404 Not Found`: Cashout not found
 
+**Valid Status Transitions**:
+- `PENDING` → `APPROVED` or `REJECTED`
+- `REJECTED` → `APPROVED` (can reverse rejection)
+- `APPROVED` → `PAID` (mark as paid after payment processing)
+- `PAID` → No further transitions allowed
+
 **Note**:
-- Only cashouts with PENDING status can be updated
 - When status is set to APPROVED, associated earnings are automatically marked as PAID
 - When status is set to REJECTED, earnings remain as PENDING
 - The processedAt timestamp is set automatically when status is updated
+- Invalid transitions will be rejected with a 400 error
 
 ---
 

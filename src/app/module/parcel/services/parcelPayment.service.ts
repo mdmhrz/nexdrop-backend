@@ -5,6 +5,7 @@ import { ParcelStatus, PaymentStatus } from '../../../../generated/prisma/enums'
 import { PaymentMethod } from '../../../../generated/prisma/enums';
 import paymentService from '../../payment/services/payment.service';
 import { envVars } from '../../../config/env';
+import { updateStatsCache } from '../../../shared/services/statsCache.service';
 
 const EARNING_PERCENTAGE = 0.7; // 70% of parcel price goes to rider
 
@@ -152,6 +153,15 @@ export const parcelPaymentService = {
                     },
                 });
             }
+        });
+
+        // Update stats cache (payment successful)
+        await updateStatsCache({
+            totalRevenue: { increment: amount },
+            dailyRevenue: { increment: amount },
+            weeklyRevenue: { increment: amount },
+            monthlyRevenue: { increment: amount },
+            platformRevenue: { increment: amount * 0.3 }, // Platform takes 30%
         });
     },
 };

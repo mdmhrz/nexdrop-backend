@@ -3,6 +3,7 @@ import AppError from "../../../errorHelper/AppError";
 import status from "http-status";
 import { IAcceptParcelPayload } from "../interfaces/parcel.interface";
 import { ParcelStatus, RiderStatus, RiderAccountStatus } from "../../../../generated/prisma/enums";
+import { updateStatsCache } from "../../../shared/services/statsCache.service";
 
 export const acceptParcelService = async (riderId: string, parcelId: string, payload: IAcceptParcelPayload) => {
     const rider = await prisma.rider.findUnique({
@@ -62,6 +63,11 @@ export const acceptParcelService = async (riderId: string, parcelId: string, pay
         });
 
         return updated;
+    });
+
+    // Update stats cache (parcel moved from REQUESTED to ASSIGNED)
+    await updateStatsCache({
+        totalPendingParcels: { decrement: 1 },
     });
 
     return updatedParcel;

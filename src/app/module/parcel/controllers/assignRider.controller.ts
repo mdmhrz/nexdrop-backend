@@ -26,7 +26,7 @@ export const assignRiderController = catchAsync(
             note: validatedPayload.note
         };
 
-        const parcel = await assignRiderService(parcelId, payload, adminId as string);
+        const parcel = await assignRiderService(parcelId as string, payload, adminId as string);
 
         sendResponse(res, {
             httpStatusCode: status.OK,

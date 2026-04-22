@@ -1,6 +1,7 @@
 import { prisma } from "../../../lib/prisma";
 import { CashoutStatus, EarningStatus } from "../../../../generated/prisma/enums";
 import { paginationHelper } from "../../../shared/pagination";
+import { updateStatsCache } from "../../../shared/services/statsCache.service";
 
 export const requestCashoutService = async (userId: string, amount: number) => {
     const rider = await prisma.rider.findUnique({
@@ -35,6 +36,11 @@ export const requestCashoutService = async (userId: string, amount: number) => {
             amount,
             status: CashoutStatus.PENDING,
         },
+    });
+
+    // Update stats cache
+    await updateStatsCache({
+        pendingPayouts: { increment: amount },
     });
 
     return cashout;
@@ -163,9 +169,17 @@ export const updateCashoutStatusService = async (cashoutId: string, status: stri
     }
 
     // Validate status transition
-    // if (cashout.status !== CashoutStatus.PENDING) {
-    //     throw new Error("Only pending cashouts can be updated");
-    // }
+    const validTransitions: Record<CashoutStatus, CashoutStatus[]> = {
+        [CashoutStatus.PENDING]: [CashoutStatus.APPROVED, CashoutStatus.REJECTED],
+        [CashoutStatus.REJECTED]: [CashoutStatus.APPROVED], // Can reverse rejection
+        [CashoutStatus.APPROVED]: [CashoutStatus.PAID], // Can mark as paid after processing
+        [CashoutStatus.PAID]: [], // No further transitions allowed
+    };
+
+    const allowedTransitions = validTransitions[cashout.status];
+    if (!allowedTransitions || !allowedTransitions.includes(status as CashoutStatus)) {
+        throw new Error(`Invalid status transition from ${cashout.status} to ${status}`);
+    }
 
     const updatedCashout = await prisma.cashout.update({
         where: { id: cashoutId },
@@ -174,6 +188,22 @@ export const updateCashoutStatusService = async (cashoutId: string, status: stri
             processedAt: new Date(),
         },
     });
+
+    // Update stats cache based on status change
+    if (status === CashoutStatus.PAID) {
+        await updateStatsCache({
+            riderPayouts: { increment: updatedCashout.amount },
+            pendingPayouts: { decrement: updatedCashout.amount },
+        });
+    } else if (status === CashoutStatus.APPROVED) {
+        // When approved, we keep it in pending until actually paid
+        // No cache change needed
+    } else if (status === CashoutStatus.REJECTED) {
+        // When rejected, remove from pending
+        await updateStatsCache({
+            pendingPayouts: { decrement: updatedCashout.amount },
+        });
+    }
 
     // If approved, mark associated earnings as PAID
     if (status === CashoutStatus.APPROVED) {

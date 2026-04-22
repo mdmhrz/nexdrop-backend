@@ -4,6 +4,7 @@ import status from "http-status";
 import { auth } from "../../../lib/auth";
 import { IApplyRiderAuthenticatedPayload, IApplyRiderUnauthenticatedPayload, IRiderApplyResult } from "../interfaces/rider.interface";
 import { RiderAccountStatus, RiderStatus } from "../../../../generated/prisma/enums";
+import { updateStatsCache } from "../../../shared/services/statsCache.service";
 
 export const riderApplyService = async (
     userId: string | undefined,
@@ -19,6 +20,11 @@ export const riderApplyService = async (
                 accountStatus: RiderAccountStatus.PENDING,
                 currentStatus: RiderStatus.AVAILABLE
             }
+        });
+
+        // Update stats cache
+        await updateStatsCache({
+            totalRiders: { increment: 1 },
         });
 
         return {
@@ -56,6 +62,15 @@ export const riderApplyService = async (
                 accountStatus: RiderAccountStatus.PENDING,
                 currentStatus: RiderStatus.AVAILABLE
             }
+        });
+
+        // Update stats cache
+        await updateStatsCache({
+            totalUsers: { increment: 1 },
+            totalRiders: { increment: 1 },
+            newUsersToday: { increment: 1 },
+            newUsersThisWeek: { increment: 1 },
+            newUsersThisMonth: { increment: 1 },
         });
 
         return {

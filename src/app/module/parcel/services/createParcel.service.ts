@@ -3,6 +3,7 @@ import { ICreateParcelPayload } from "../interfaces/parcel.interface";
 import { ParcelStatus } from "../../../../generated/prisma/enums";
 import AppError from "../../../errorHelper/AppError";
 import status from "http-status";
+import { updateStatsCache } from "../../../shared/services/statsCache.service";
 
 export const createParcelService = async (customerId: string, payload: ICreateParcelPayload) => {
     // Generate a unique tracking ID
@@ -33,6 +34,15 @@ export const createParcelService = async (customerId: string, payload: ICreatePa
         });
 
         return createdParcel;
+    });
+
+    // Update stats cache
+    await updateStatsCache({
+        totalParcels: { increment: 1 },
+        totalPendingParcels: { increment: 1 },
+        dailyParcels: { increment: 1 },
+        weeklyParcels: { increment: 1 },
+        monthlyParcels: { increment: 1 },
     });
 
     return parcel;

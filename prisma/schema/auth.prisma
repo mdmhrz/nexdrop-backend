@@ -20,6 +20,7 @@ model User {
     addresses     UserAddress[]
     statusLogs    ParcelStatusLog[]
     riderProfile  Rider?
+    ratings       RiderRating[]     @relation("CustomerRatings")
 
     sessions Session[]
     accounts Account[]
