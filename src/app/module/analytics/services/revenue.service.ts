@@ -60,7 +60,7 @@ export const getRevenueAnalyticsService = async (query: { startDate?: string; en
     _count: true,
   });
 
-  const byPaymentMethod: RevenueByPaymentMethod[] = byPaymentMethodData.map((item) => ({
+  const byPaymentMethod: RevenueByPaymentMethod[] = byPaymentMethodData.map((item: { paymentMethod: string; _sum: { amount: number | null }; _count: number }) => ({
     paymentMethod: item.paymentMethod,
     totalRevenue: item._sum.amount || 0,
     paymentCount: item._count,
@@ -84,7 +84,7 @@ export const getRevenueAnalyticsService = async (query: { startDate?: string; en
 
   const districtMap = new Map<string, { revenue: number; count: number }>();
 
-  paymentsWithParcel.forEach((payment) => {
+  paymentsWithParcel.forEach((payment: { parcel?: { districtFrom?: string | null }; amount: number }) => {
     const district = payment.parcel?.districtFrom || "Unknown";
     const current = districtMap.get(district) || { revenue: 0, count: 0 };
     current.revenue += payment.amount;
@@ -114,7 +114,7 @@ export const getRevenueAnalyticsService = async (query: { startDate?: string; en
 
   const dateMap = new Map<string, { revenue: number; count: number }>();
 
-  overTimeData.forEach((item) => {
+  overTimeData.forEach((item: { createdAt: Date; _sum: { amount: number | null }; _count: number }) => {
     const date = item.createdAt.toISOString().split("T")[0];
     const current = dateMap.get(date) || { revenue: 0, count: 0 };
     current.revenue += item._sum.amount || 0;

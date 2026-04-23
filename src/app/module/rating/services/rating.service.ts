@@ -123,11 +123,11 @@ export const getRatingSummaryService = async (riderId: string) => {
   });
 
   const ratingDistribution = {
-    fiveStar: ratings.filter(r => r.rating === 5).length,
-    fourStar: ratings.filter(r => r.rating === 4).length,
-    threeStar: ratings.filter(r => r.rating === 3).length,
-    twoStar: ratings.filter(r => r.rating === 2).length,
-    oneStar: ratings.filter(r => r.rating === 1).length,
+    fiveStar: ratings.filter((r: { rating: number }) => r.rating === 5).length,
+    fourStar: ratings.filter((r: { rating: number }) => r.rating === 4).length,
+    threeStar: ratings.filter((r: { rating: number }) => r.rating === 3).length,
+    twoStar: ratings.filter((r: { rating: number }) => r.rating === 2).length,
+    oneStar: ratings.filter((r: { rating: number }) => r.rating === 1).length,
   };
 
   return {
@@ -180,7 +180,7 @@ export const updateRatingService = async (ratingId: string, customerId: string, 
         select: { rating: true },
       });
 
-      const total = allRatings.reduce((sum, r) => sum + r.rating, 0);
+      const total = allRatings.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0);
       const newAverage = total / allRatings.length;
 
       await prisma.rider.update({
@@ -234,7 +234,7 @@ export const deleteRatingService = async (ratingId: string, customerId: string) 
         data: { rating: 0, totalRatings: 0 },
       });
     } else {
-      const total = allRatings.reduce((sum, r) => sum + r.rating, 0);
+      const total = allRatings.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0);
       const newAverage = total / allRatings.length;
 
       await prisma.rider.update({
@@ -265,7 +265,7 @@ export const getRecentReviewsService = async (limit: number) => {
     take: limit,
   });
 
-  return reviews.map(review => ({
+  return reviews.map((review: { id: string; rating: number; comment: string | null; createdAt: Date; customer: { name: string }; rider: { user: { name: string } } }) => ({
     id: review.id,
     rating: review.rating,
     comment: review.comment,

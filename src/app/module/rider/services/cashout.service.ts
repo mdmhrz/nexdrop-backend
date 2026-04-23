@@ -69,13 +69,14 @@ export const getMyCashoutsService = async (userId: string, query: { status?: str
 
     // Date range filter
     if (query.startDate || query.endDate) {
-        where.requestedAt = {};
+        const dateFilter: { gte?: Date; lte?: Date } = {};
         if (query.startDate) {
-            where.requestedAt.gte = new Date(query.startDate);
+            dateFilter.gte = new Date(query.startDate);
         }
         if (query.endDate) {
-            where.requestedAt.lte = new Date(query.endDate);
+            dateFilter.lte = new Date(query.endDate);
         }
+        where.requestedAt = dateFilter;
     }
 
     const [cashouts, total] = await Promise.all([
@@ -114,13 +115,14 @@ export const getAllCashoutsService = async (query: { status?: string; startDate?
 
     // Date range filter
     if (query.startDate || query.endDate) {
-        where.requestedAt = {};
+        const dateFilter: { gte?: Date; lte?: Date } = {};
         if (query.startDate) {
-            where.requestedAt.gte = new Date(query.startDate);
+            dateFilter.gte = new Date(query.startDate);
         }
         if (query.endDate) {
-            where.requestedAt.lte = new Date(query.endDate);
+            dateFilter.lte = new Date(query.endDate);
         }
+        where.requestedAt = dateFilter;
     }
 
     const [cashouts, total] = await Promise.all([

@@ -76,13 +76,14 @@ export const getEarningsHistoryService = async (userId: string, query: { status?
 
     // Date range filter
     if (query.startDate || query.endDate) {
-        where.createdAt = {};
+        const dateFilter: { gte?: Date; lte?: Date } = {};
         if (query.startDate) {
-            where.createdAt.gte = new Date(query.startDate);
+            dateFilter.gte = new Date(query.startDate);
         }
         if (query.endDate) {
-            where.createdAt.lte = new Date(query.endDate);
+            dateFilter.lte = new Date(query.endDate);
         }
+        where.createdAt = dateFilter;
     }
 
     // Search by tracking ID
@@ -126,7 +127,7 @@ export const getEarningsHistoryService = async (userId: string, query: { status?
         prisma.earning.count({ where }),
     ]);
 
-    const totalAmount = earnings.reduce((sum, earning) => sum + earning.amount, 0);
+    const totalAmount = earnings.reduce((sum: number, earning: { amount: number }) => sum + earning.amount, 0);
 
     return {
         earnings,

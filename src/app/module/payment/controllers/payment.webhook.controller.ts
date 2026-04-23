@@ -24,7 +24,7 @@ export const webhookController = catchAsync(
             console.error('Webhook error:', error);
             return res.status(status.BAD_REQUEST).json({
                 success: false,
-                message: error.message,
+                message: error instanceof Error ? error.message : 'Unknown error',
             });
         }
     }

@@ -49,7 +49,7 @@ export const sslcommerzIPNController = catchAsync(
             console.error('SSL Commerz IPN error:', error);
             return res.status(status.INTERNAL_SERVER_ERROR).json({
                 success: false,
-                message: error.message || 'Error processing SSL Commerz IPN',
+                message: error instanceof Error ? error.message : 'Error processing SSL Commerz IPN',
             });
         }
     }
@@ -114,7 +114,7 @@ export const sslcommerzSuccessController = catchAsync(
             return res.redirect(`${process.env.FRONTEND_URL}/payment/success?session_id=${validation.tranId}`);
         } catch (error: unknown) {
             console.error('SSL Commerz success callback error:', error);
-            return res.redirect(`${process.env.FRONTEND_URL}/payment/fail?error=${error.message}`);
+            return res.redirect(`${process.env.FRONTEND_URL}/payment/fail?error=${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 );

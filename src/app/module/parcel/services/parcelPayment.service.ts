@@ -123,7 +123,7 @@ export const parcelPaymentService = {
         }
 
         // Use transaction to ensure atomicity
-        await prisma.$transaction(async (tx) => {
+        const updatedParcel = await prisma.$transaction(async (tx) => {
             // Update payment status
             await tx.payment.updateMany({
                 where: {
