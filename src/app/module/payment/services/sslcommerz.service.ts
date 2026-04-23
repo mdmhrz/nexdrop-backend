@@ -23,7 +23,7 @@ export const sslcommerzService = {
         cancelUrl: string;
         metadata: Record<string, string>;
     }): Promise<{ url: string; sessionId: string }> {
-        const { amount, customerEmail, customerName, successUrl, cancelUrl, metadata } = params;
+        const { amount, customerEmail, customerName, cancelUrl, metadata } = params;
 
         const tranId = `TRANSACTION_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -69,7 +69,7 @@ export const sslcommerzService = {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: new URLSearchParams(payload as any).toString(),
+                body: new URLSearchParams(payload as Record<string, string>).toString(),
             });
 
             const data = await response.json();
@@ -82,15 +82,15 @@ export const sslcommerzService = {
                 url: data.GatewayPageURL,
                 sessionId: tranId,
             };
-        } catch (error: any) {
-            throw new Error(`SSL Commerz session creation error: ${error.message}`);
+        } catch (error) {
+            throw new Error(`SSL Commerz session creation error: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
         }
     },
 
     /**
      * Verify SSL Commerz IPN signature
      */
-    verifyIPN(ipnData: Record<string, any>): boolean {
+    verifyIPN(ipnData: Record<string, unknown>): boolean {
         const storeId = envVars.SSLCOMMERZ.STORE_ID;
         const storePassword = envVars.SSLCOMMERZ.STORE_PASSWORD;
         const status = ipnData.status;
@@ -109,21 +109,21 @@ export const sslcommerzService = {
     /**
      * Extract transaction ID from IPN data
      */
-    extractTransactionId(ipnData: Record<string, any>): string {
+    extractTransactionId(ipnData: Record<string, unknown>): string {
         return ipnData.tran_id || '';
     },
 
     /**
      * Extract amount from IPN data
      */
-    extractAmount(ipnData: Record<string, any>): number {
+    extractAmount(ipnData: Record<string, unknown>): number {
         return parseFloat(ipnData.amount) || 0;
     },
 
     /**
      * Extract metadata from IPN data
      */
-    extractMetadata(ipnData: Record<string, any>): Record<string, string> {
+    extractMetadata(ipnData: Record<string, unknown>): Record<string, string> {
         return {
             type: ipnData.value_a || '',
             parcelId: ipnData.value_b || '',
@@ -134,7 +134,7 @@ export const sslcommerzService = {
     /**
      * Check if payment was successful
      */
-    isPaymentSuccessful(ipnData: Record<string, any>): boolean {
+    isPaymentSuccessful(ipnData: Record<string, unknown>): boolean {
         return ipnData.status === 'VALID' || ipnData.status === 'VALIDATED';
     },
 
@@ -165,8 +165,8 @@ export const sslcommerzService = {
                 cardType: data.card_type || '',
                 tranDate: data.tran_date || '',
             };
-        } catch (error: any) {
-            throw new Error(`SSL Commerz validation error: ${error.message}`);
+        } catch (error) {
+            throw new Error(`SSL Commerz validation error: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
         }
     },
 };

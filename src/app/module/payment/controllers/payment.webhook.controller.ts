@@ -20,7 +20,7 @@ export const webhookController = catchAsync(
                 message: 'Webhook processed successfully',
                 data: null,
             });
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Webhook error:', error);
             return res.status(status.BAD_REQUEST).json({
                 success: false,

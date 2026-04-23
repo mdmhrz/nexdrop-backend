@@ -8,7 +8,7 @@ import { PaymentMethod } from '../../../../generated/prisma/enums';
 
 export const initiatePaymentController = catchAsync(
     async (req: Request, res: Response) => {
-        const userId = (req as any).user.userId;
+        const userId = req.user!.userId;
         const { parcelId, paymentMethod } = req.body;
 
         const result = await parcelPaymentService.initiateParcelPayment(

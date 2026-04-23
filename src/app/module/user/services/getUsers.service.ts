@@ -1,7 +1,7 @@
 import { prisma } from "../../../lib/prisma";
 import { IPaginatedResult, calculatePaginationMeta } from "../../../shared/pagination";
 
-export const getUsersService = async (search?: string, page: number = 1, limit: number = 10): Promise<IPaginatedResult<any>> => {
+export const getUsersService = async (search?: string, page: number = 1, limit: number = 10): Promise<IPaginatedResult<unknown>> => {
     const where = search ? {
         OR: [
             {

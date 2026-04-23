@@ -53,7 +53,7 @@ export const getCurrentEarningsService = async (userId: string) => {
     };
 };
 
-export const getEarningsHistoryService = async (userId: string, query: any) => {
+export const getEarningsHistoryService = async (userId: string, query: { status?: string; startDate?: string; endDate?: string; search?: string; sortBy?: string; sortOrder?: string; page?: string | string[]; limit?: string | string[] }) => {
     const rider = await prisma.rider.findUnique({
         where: { userId },
     });
@@ -65,7 +65,7 @@ export const getEarningsHistoryService = async (userId: string, query: any) => {
     const { page, limit, skip } = paginationHelper(query);
 
     // Build where clause with filters
-    const where: any = {
+    const where: Record<string, unknown> = {
         riderId: rider.id,
     };
 
@@ -96,7 +96,7 @@ export const getEarningsHistoryService = async (userId: string, query: any) => {
     }
 
     // Sorting
-    const orderBy: any = {};
+    const orderBy: Record<string, 'asc' | 'desc'> = {};
     if (query.sortBy) {
         orderBy[query.sortBy] = query.sortOrder === "asc" ? "asc" : "desc";
     } else {

@@ -4,7 +4,7 @@ import { optionalAuth } from "../../middleware/optionalAuth";
 import { checkAuth } from "../../middleware/checkAuth";
 
 import { validateRequest } from "../../middleware/validateRequest";
-import { updateRiderStatusValidation, requestCashoutValidation, getCashoutsValidation, updateCashoutStatusValidation } from "./validations";
+import { updateRiderStatusValidation, requestCashoutValidation, updateCashoutStatusValidation } from "./validations";
 import { UserRole } from "../../../generated/prisma/enums";
 
 const router = Router();

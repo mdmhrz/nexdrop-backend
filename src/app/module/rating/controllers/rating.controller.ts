@@ -11,7 +11,6 @@ import {
   getRecentReviewsService,
 } from '../services';
 import { submitRatingSchema, updateRatingSchema, getRatingsSchema } from '../validations';
-import { validateRequest } from '../../../middleware/validateRequest';
 
 export const submitRatingController = catchAsync(async (req: Request, res: Response) => {
   const validatedData = submitRatingSchema.parse(req.body);

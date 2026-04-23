@@ -46,7 +46,7 @@ export const requestCashoutService = async (userId: string, amount: number) => {
     return cashout;
 };
 
-export const getMyCashoutsService = async (userId: string, query: any) => {
+export const getMyCashoutsService = async (userId: string, query: { status?: string; startDate?: string; endDate?: string; page?: string | string[]; limit?: string | string[] }) => {
     const rider = await prisma.rider.findUnique({
         where: { userId },
     });
@@ -58,7 +58,7 @@ export const getMyCashoutsService = async (userId: string, query: any) => {
     const { page, limit, skip } = paginationHelper(query);
 
     // Build where clause with filters
-    const where: any = {
+    const where: Record<string, unknown> = {
         riderId: rider.id,
     };
 
@@ -101,11 +101,11 @@ export const getMyCashoutsService = async (userId: string, query: any) => {
     };
 };
 
-export const getAllCashoutsService = async (query: any) => {
+export const getAllCashoutsService = async (query: { status?: string; startDate?: string; endDate?: string; page?: string | string[]; limit?: string | string[] }) => {
     const { page, limit, skip } = paginationHelper(query);
 
     // Build where clause with filters
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     // Status filter
     if (query.status && query.status !== "ALL") {

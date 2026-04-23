@@ -9,7 +9,7 @@ import {
 } from "../interfaces";
 import { getStatsCache } from "../../../shared/services/statsCache.service";
 
-export const getRevenueAnalyticsService = async (query: any) => {
+export const getRevenueAnalyticsService = async (query: { startDate?: string; endDate?: string }) => {
   const startDate = query.startDate ? new Date(query.startDate) : new Date(new Date().setDate(new Date().getDate() - 30));
   const endDate = query.endDate ? new Date(query.endDate) : new Date();
 

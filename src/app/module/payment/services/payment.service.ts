@@ -77,7 +77,7 @@ export const paymentService = {
     /**
      * Handle Stripe webhook (generic)
      */
-    async handleStripeWebhook(event: any): Promise<void> {
+    async handleStripeWebhook(event: unknown): Promise<void> {
         const metadata = stripeService.extractMetadata(event);
 
         if (!metadata) {
