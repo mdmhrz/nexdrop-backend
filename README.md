@@ -1,5 +1,7 @@
 # NexDrop Backend
 
+![GitHub Views](https://komarev.com/ghpvc/?username=mdmhrz&repo=nexdrop-backend&style=flat-square&color=blue)
+
 A modern, scalable backend API for a parcel delivery management system. Built with TypeScript, Express.js, and Prisma ORM, NexDrop provides a comprehensive solution for managing parcels, riders, payments, and user authentication.
 
 ## Live Demo
