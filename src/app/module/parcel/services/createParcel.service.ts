@@ -1,8 +1,6 @@
 import { prisma } from "../../../lib/prisma";
 import { ICreateParcelPayload } from "../interfaces/parcel.interface";
 import { ParcelStatus } from "../../../../generated/prisma/enums";
-import AppError from "../../../errorHelper/AppError";
-import status from "http-status";
 import { updateStatsCache } from "../../../shared/services/statsCache.service";
 
 export const createParcelService = async (customerId: string, payload: ICreateParcelPayload) => {

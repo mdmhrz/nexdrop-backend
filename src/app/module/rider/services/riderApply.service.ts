@@ -90,7 +90,7 @@ export const riderApplyService = async (
                 await prisma.user.delete({
                     where: { id: createdUserId }
                 });
-            } catch (deleteError) {
+            } catch {
                 // Silently ignore deletion errors - user might already be deleted or cascade handled it
             }
         }

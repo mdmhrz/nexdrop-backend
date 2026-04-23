@@ -45,7 +45,7 @@ export const sslcommerzIPNController = catchAsync(
                 message: 'SSL Commerz IPN processed successfully',
                 data: null,
             });
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('SSL Commerz IPN error:', error);
             return res.status(status.INTERNAL_SERVER_ERROR).json({
                 success: false,
@@ -112,7 +112,7 @@ export const sslcommerzSuccessController = catchAsync(
 
             // Redirect to frontend success page
             return res.redirect(`${process.env.FRONTEND_URL}/payment/success?session_id=${validation.tranId}`);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('SSL Commerz success callback error:', error);
             return res.redirect(`${process.env.FRONTEND_URL}/payment/fail?error=${error.message}`);
         }

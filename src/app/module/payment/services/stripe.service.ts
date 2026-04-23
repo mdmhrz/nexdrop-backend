@@ -1,5 +1,4 @@
 import Stripe from 'stripe';
-import { IStripePaymentIntent } from '../interfaces';
 import { envVars } from '../../../config/env';
 
 const stripe = new Stripe(envVars.STRIPE_SECRET_KEY, {

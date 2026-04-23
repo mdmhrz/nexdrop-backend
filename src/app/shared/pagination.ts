@@ -34,7 +34,7 @@ export const getPaginationParams = (page?: string | string[], limit?: string | s
     };
 };
 
-export const paginationHelper = (query: any) => {
+export const paginationHelper = (query: { page?: string | string[]; limit?: string | string[] }) => {
     const { page, limit } = getPaginationParams(query.page, query.limit);
     const skip = (page - 1) * limit;
     return { page, limit, skip };

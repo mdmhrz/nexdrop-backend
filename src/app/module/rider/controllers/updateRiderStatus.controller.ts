@@ -5,7 +5,6 @@ import status from "http-status";
 import { updateRiderStatusService } from "../services";
 import { IUpdateRiderStatusPayload } from "../interfaces/rider.interface";
 import { updateRiderStatusValidation } from "../validations";
-import { validateRequest } from "../../../middleware/validateRequest";
 
 export const updateRiderStatusController = catchAsync(
     async (req: Request, res: Response) => {

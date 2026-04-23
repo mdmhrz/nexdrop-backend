@@ -10,7 +10,7 @@ export const getAllParcelsService = async (
 ) => {
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (status) {
         where.status = status;

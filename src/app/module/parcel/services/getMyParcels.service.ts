@@ -1,5 +1,4 @@
 import { prisma } from "../../../lib/prisma";
-import { ParcelStatus } from "../../../../generated/prisma/enums";
 
 export const getMyParcelsService = async (customerId: string, page: number = 1, limit: number = 10) => {
     const skip = (page - 1) * limit;

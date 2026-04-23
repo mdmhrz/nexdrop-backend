@@ -2,7 +2,6 @@ import { prisma } from "../../../lib/prisma";
 import AppError from "../../../errorHelper/AppError";
 import status from "http-status";
 import { IUpdateUserRolePayload } from "../interfaces/user.interface";
-import { UserRole } from "../../../../generated/prisma/enums";
 
 export const updateUserRoleService = async (id: string, payload: IUpdateUserRolePayload) => {
     const user = await prisma.user.findUnique({

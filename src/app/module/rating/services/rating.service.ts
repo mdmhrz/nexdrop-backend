@@ -1,12 +1,12 @@
 import { prisma } from "../../../lib/prisma";
 
 import { ParcelStatus } from "../../../../generated/prisma/enums";
-import type { SubmitRatingInput, UpdateRatingInput, RatingResponse, RatingSummary, RecentReview } from "../interfaces";
+import type { SubmitRatingInput, UpdateRatingInput } from "../interfaces";
 import AppError from "../../../errorHelper/AppError";
 import status from "http-status";
 
 export const submitRatingService = async (customerId: string, data: SubmitRatingInput) => {
- 
+
   // Check if parcel exists and belongs to customer
   const parcel = await prisma.parcel.findUnique({
     where: { id: data.parcelId },
@@ -158,7 +158,6 @@ export const updateRatingService = async (ratingId: string, customerId: string, 
   }
 
   const oldRatingValue = rating.rating;
-  const newRatingValue = data.rating ?? oldRatingValue;
 
   // Update rating
   const updatedRating = await prisma.riderRating.update({

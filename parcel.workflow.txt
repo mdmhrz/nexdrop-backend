@@ -278,6 +278,131 @@ Customer: 6. GET /parcels/:id → Tracks parcel progress 7. GET /parcels/my → 
 
 ---
 
+## Code Quality & Refactoring TODO
+
+### APIs That Need Better Implementation
+
+#### 1. Parcel Status Update Services (HIGH PRIORITY)
+**Files**: `acceptParcel.service.ts`, `pickParcel.service.ts`, `deliverParcel.service.ts`, `assignRider.service.ts`, `cancelParcel.service.ts`
+
+**Issues**:
+- Repetitive rider validation logic (find rider, check accountStatus, check currentStatus)
+- Repetitive parcel validation logic (find parcel, check status, check ownership)
+- Repetitive transaction pattern (update parcel + create status log)
+- Status log creation is duplicated in every service
+
+**Solution**: Create a shared `ParcelStatusService` utility with methods like:
+- `validateRiderAccess(riderId, requiredStatus)`
+- `validateParcelAccess(parcelId, userId, requiredStatus)`
+- `updateParcelStatus(parcelId, newStatus, changedBy, note)`
+
+#### 2. Rider Earnings Service (MEDIUM PRIORITY)
+**File**: `riderEarnings.service.ts`
+
+**Issues**:
+- Uses `throw new Error()` instead of `AppError` (inconsistent error handling)
+- Uses `any` type for query parameters (not type-safe)
+
+**Solution**:
+- Replace `throw new Error()` with `AppError(status.NOT_FOUND, "message")`
+- Define proper TypeScript interface for query parameters
+
+#### 3. Dashboard Services (MEDIUM PRIORITY)
+**Files**: `riderDashboard.service.ts`, `userDashboard.service.ts`
+
+**Issues**:
+- Duplicate average delivery time calculation logic
+- Duplicate last 7 days data generation logic
+- Both have nearly identical structure
+
+**Solution**: Create shared utility functions:
+- `calculateAverageDeliveryTime(parcels)`
+- `generateTimeSeriesData(entityId, days, aggregationFn)`
+
+#### 4. Stats Cache Service (LOW PRIORITY)
+**File**: `statsCache.service.ts`
+
+**Issues**:
+- Initialization code duplicated in `updateStatsCache` and `getStatsCache`
+- No race condition protection for concurrent updates
+- Magic numbers scattered throughout
+
+**Solution**:
+- Extract initialization to a single `initializeCache()` function
+- Add optimistic locking or use database transactions
+- Move constants to config file
+
+### Code Repetition - Areas to Reduce
+
+#### 1. Rider Validation Pattern (Repeated 4+ times)
+```typescript
+// Repeated in: acceptParcel, pickParcel, deliverParcel
+const rider = await prisma.rider.findUnique({ where: { userId: riderId } });
+if (!rider) throw AppError(...);
+if (rider.accountStatus !== RiderAccountStatus.ACTIVE) throw AppError(...);
+```
+
+**Solution**: Create `src/app/shared/services/riderValidation.service.ts`
+
+#### 2. Parcel Status Update Pattern (Repeated 5+ times)
+```typescript
+// Repeated in: acceptParcel, pickParcel, deliverParcel, assignRider, cancelParcel
+await prisma.$transaction(async (tx) => {
+  await tx.parcel.update(...);
+  await tx.parcelStatusLog.create(...);
+});
+```
+
+**Solution**: Create `src/app/shared/services/parcelStatus.service.ts`
+
+#### 3. Stats Cache Initialization (Duplicated)
+**Solution**: Extract to single function with default values object
+
+### Non-Industry Standard Practices
+
+#### 1. Inconsistent Error Handling
+- Some services use `throw new Error()` (riderEarnings.service.ts)
+- Others use `AppError` with proper status codes
+- **Fix**: Standardize all services to use `AppError`
+
+#### 2. Type Safety Issues
+- `query: any` in earnings service
+- No proper interfaces for query parameters
+- **Fix**: Define Zod schemas or TypeScript interfaces for all query params
+
+#### 3. Magic Numbers
+- `0.7` for rider percentage (should be in config)
+- `take: 5`, `take: 100` limits (should be constants)
+- **Fix**: Move to `src/app/config/constants.ts`
+
+#### 4. No Constants File
+- Hardcoded values scattered throughout
+- **Fix**: Create constants file for:
+  - Rider commission percentage
+  - Pagination limits
+  - Time limits (24h for rating edits)
+  - Cache TTL values
+
+#### 5. Potential Race Conditions
+- Stats cache updates without locking
+- Multiple concurrent updates could overwrite each other
+- **Fix**: Use Prisma transactions or optimistic locking
+
+#### 6. N+1 Query Risk
+- Dashboard services fetch parcels then fetch status logs separately
+- **Fix**: Use Prisma `include` to fetch related data in single query
+
+### Recommended Refactoring Priority
+
+1. **HIGH**: Extract rider validation to shared service
+2. **HIGH**: Extract parcel status update pattern to shared service
+3. **MEDIUM**: Fix error handling inconsistency (replace `Error` with `AppError`)
+4. **MEDIUM**: Add type safety to query parameters
+5. **LOW**: Create constants file
+6. **LOW**: Add race condition protection to stats cache
+
+---
+
 ## Current API Status
 
 ### ✅ Implemented - Parcel APIs
@@ -311,10 +436,14 @@ Customer: 6. GET /parcels/:id → Tracks parcel progress 7. GET /parcels/my → 
 - GET /api/v1/analytics/revenue - Get revenue analytics (ADMIN, SUPER_ADMIN)
 - GET /api/v1/analytics/dashboard - Get dashboard metrics (ADMIN, SUPER_ADMIN)
 
+### ✅ Implemented - Dashboard APIs
+- GET /api/v1/rider/dashboard - Get rider dashboard with overview stats, charts (RIDER)
+- GET /api/v1/users/dashboard - Get customer dashboard with overview stats, charts (CUSTOMER)
+
 ### ✅ Implemented - Rating APIs
 - POST /api/v1/ratings - Submit rating (CUSTOMER)
-- GET /api/v1/ratings/rider/:riderId/ratings - Get rider ratings (PUBLIC)
-- GET /api/v1/ratings/rider/:riderId/rating-summary - Get rating summary (PUBLIC)
+- GET /api/v1/ratings/rider/:riderId - Get rider ratings (PUBLIC)
+- GET /api/v1/ratings/rider/:riderId/summary - Get rating summary (PUBLIC)
 - PATCH /api/v1/ratings/:id - Edit rating (CUSTOMER, within 24h)
 - DELETE /api/v1/ratings/:id - Delete rating (CUSTOMER, within 24h)
 - GET /api/v1/ratings/reviews/recent - Recent reviews for landing page (PUBLIC)

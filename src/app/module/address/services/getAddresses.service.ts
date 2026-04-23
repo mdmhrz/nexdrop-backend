@@ -1,7 +1,7 @@
 import { prisma } from "../../../lib/prisma";
 import { IPaginatedResult, calculatePaginationMeta } from "../../../shared/pagination";
 
-export const getAddressesService = async (userId: string, page: number = 1, limit: number = 10): Promise<IPaginatedResult<any>> => {
+export const getAddressesService = async (userId: string, page: number = 1, limit: number = 10): Promise<IPaginatedResult<unknown>> => {
     const skip = (page - 1) * limit;
 
     const [addresses, total] = await Promise.all([

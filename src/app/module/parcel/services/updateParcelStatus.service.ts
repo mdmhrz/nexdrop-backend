@@ -1,6 +1,5 @@
 import { prisma } from "../../../lib/prisma";
 import { IUpdateParcelStatusPayload } from "../interfaces/parcel.interface";
-import { ParcelStatus } from "../../../../generated/prisma/enums";
 import AppError from "../../../errorHelper/AppError";
 import status from "http-status";
 
