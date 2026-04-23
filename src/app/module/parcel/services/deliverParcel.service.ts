@@ -34,7 +34,7 @@ export const deliverParcelService = async (riderId: string, parcelId: string, pa
         throw new AppError(status.BAD_REQUEST, "Parcel must be in IN_TRANSIT status to deliver");
     }
 
-    const updatedParcel = await prisma.$transaction(async (tx) => {
+    const updatedParcel = await prisma.$transaction(async (tx: any) => {
         // Update parcel status
         const updated = await tx.parcel.update({
             where: { id: parcelId },
@@ -90,8 +90,8 @@ export const deliverParcelService = async (riderId: string, parcelId: string, pa
     });
 
     if (parcelLogs.length >= 2) {
-        const pickupTime = parcelLogs.find(log => log.status === ParcelStatus.IN_TRANSIT)?.timestamp;
-        const deliveredTime = parcelLogs.find(log => log.status === ParcelStatus.DELIVERED)?.timestamp;
+        const pickupTime = parcelLogs.find((log: { status: string; timestamp: Date }) => log.status === ParcelStatus.IN_TRANSIT)?.timestamp;
+        const deliveredTime = parcelLogs.find((log: { status: string; timestamp: Date }) => log.status === ParcelStatus.DELIVERED)?.timestamp;
 
         if (pickupTime && deliveredTime) {
             const deliveryTimeHours = (deliveredTime.getTime() - pickupTime.getTime()) / (1000 * 60 * 60);

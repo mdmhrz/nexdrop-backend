@@ -4,6 +4,7 @@ import { prisma } from '../../../lib/prisma';
 import { IPaymentInitiatePayload, IPaymentInitiateResponse, WebhookCallback } from '../interfaces';
 import stripeService from './stripe.service';
 import sslcommerzService from './sslcommerz.service';
+import Stripe from 'stripe';
 
 // Webhook callback registry
 const webhookCallbacks: Map<string, WebhookCallback> = new Map();
@@ -78,17 +79,18 @@ export const paymentService = {
      * Handle Stripe webhook (generic)
      */
     async handleStripeWebhook(event: unknown): Promise<void> {
-        const metadata = stripeService.extractMetadata(event);
+        const stripeEvent = event as Stripe.Event;
+        const metadata = stripeService.extractMetadata(stripeEvent);
 
         if (!metadata) {
             throw new Error('Metadata not found in webhook');
         }
 
-        if (!stripeService.isPaymentSuccessful(event)) {
+        if (!stripeService.isPaymentSuccessful(stripeEvent)) {
             return; // Payment not successful, do nothing
         }
 
-        const amount = stripeService.extractAmount(event);
+        const amount = stripeService.extractAmount(stripeEvent);
         const paymentType = metadata.type || 'default';
 
         // Call registered callback for this payment type

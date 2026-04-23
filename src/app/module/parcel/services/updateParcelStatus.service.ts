@@ -16,7 +16,7 @@ export const updateParcelStatusService = async (parcelId: string, payload: IUpda
         throw new AppError(status.BAD_REQUEST, "Parcel is already in the requested status");
     }
 
-    const updatedParcel = await prisma.$transaction(async (tx) => {
+    const updatedParcel = await prisma.$transaction(async (tx: any) => {
         const updated = await tx.parcel.update({
             where: { id: parcelId },
             data: {

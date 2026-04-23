@@ -146,7 +146,7 @@ export const getUserDashboardService = async (userId: string) => {
     _count: true,
   });
 
-  const pieChartData = statusDistribution.map((item) => ({
+  const pieChartData = statusDistribution.map((item: { status: string; _count: number }) => ({
     status: item.status,
     count: item._count,
   }));

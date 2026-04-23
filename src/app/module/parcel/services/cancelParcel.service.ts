@@ -21,7 +21,7 @@ export const cancelParcelService = async (customerId: string, parcelId: string, 
         throw new AppError(status.BAD_REQUEST, "Only parcels in REQUESTED status can be cancelled");
     }
 
-    const updatedParcel = await prisma.$transaction(async (tx) => {
+    const updatedParcel = await prisma.$transaction(async (tx: any) => {
         const updated = await tx.parcel.update({
             where: { id: parcelId },
             data: {

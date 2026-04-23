@@ -110,14 +110,14 @@ export const sslcommerzService = {
      * Extract transaction ID from IPN data
      */
     extractTransactionId(ipnData: Record<string, unknown>): string {
-        return ipnData.tran_id || '';
+        return (ipnData.tran_id as string) || '';
     },
 
     /**
      * Extract amount from IPN data
      */
     extractAmount(ipnData: Record<string, unknown>): number {
-        return parseFloat(ipnData.amount) || 0;
+        return parseFloat(ipnData.amount as string) || 0;
     },
 
     /**
@@ -125,9 +125,9 @@ export const sslcommerzService = {
      */
     extractMetadata(ipnData: Record<string, unknown>): Record<string, string> {
         return {
-            type: ipnData.value_a || '',
-            parcelId: ipnData.value_b || '',
-            description: ipnData.value_c || '',
+            type: (ipnData.value_a as string) || '',
+            parcelId: (ipnData.value_b as string) || '',
+            description: (ipnData.value_c as string) || '',
         };
     },
 
