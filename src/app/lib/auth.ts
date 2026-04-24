@@ -88,7 +88,7 @@ export const auth = betterAuth({
                     }
 
                     if (user && !user.emailVerified) {
-                        sendEmail({
+                        await sendEmail({
                             to: email,
                             subject: "Verify your email - Nex Drop",
                             templateName: "otp",
@@ -112,7 +112,7 @@ export const auth = betterAuth({
                     }
 
                     if (user) {
-                        sendEmail({
+                        await sendEmail({
                             to: email,
                             subject: "Password Reset OTP - Nex Drop",
                             templateName: "password-reset-otp",
@@ -120,7 +120,7 @@ export const auth = betterAuth({
                                 name: user.name,
                                 otp
                             }
-                        }).catch((err) => console.error("Failed to send password reset email:", err));
+                        })
                     }
                 }
             },
