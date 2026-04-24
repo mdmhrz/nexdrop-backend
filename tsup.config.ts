@@ -9,4 +9,7 @@ export default defineConfig({
     sourcemap: false,
     minify: false,
     skipNodeModulesBundle: true,
+    loader: {
+        '.ejs': 'copy'
+    },
 });
