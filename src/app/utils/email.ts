@@ -15,6 +15,15 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+// Verify SMTP connection on startup
+transporter.verify((error) => {
+    if (error) {
+        console.error('[SMTP] Connection FAILED:', error.message);
+    } else {
+        console.log('[SMTP] Connection OK - ready to send emails');
+    }
+});
+
 
 const templates: Record<string, (data: Record<string, any>) => string> = {
     otp: ({ name, otp }) => `<!DOCTYPE html>

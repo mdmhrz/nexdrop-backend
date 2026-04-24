@@ -120,7 +120,7 @@ export const auth = betterAuth({
                                 name: user.name,
                                 otp
                             }
-                        })
+                        }).catch((err) => console.error("Failed to send password reset email:", err));
                     }
                 }
             },
