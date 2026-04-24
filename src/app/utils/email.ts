@@ -1,28 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { envVars } from "../config/env";
 import AppError from "../errorHelper/AppError";
 import status from "http-status";
 
 
-const transporter = nodemailer.createTransport({
-    host: envVars.EMAIL_SENDER.SMTP_HOST,
-    port: 587,
-    secure: false,
-    auth: {
-        user: envVars.EMAIL_SENDER.SMTP_USER,
-        pass: envVars.EMAIL_SENDER.SMTP_PASS
-    },
-});
-
-// Verify SMTP connection on startup
-transporter.verify((error) => {
-    if (error) {
-        console.error('[SMTP] Connection FAILED:', error.message);
-    } else {
-        console.log('[SMTP] Connection OK - ready to send emails');
-    }
-});
+const resend = new Resend(envVars.RESEND_API_KEY);
 
 
 const templates: Record<string, (data: Record<string, any>) => string> = {
@@ -118,15 +101,10 @@ interface SendEmailOptions {
     subject: string;
     templateName: string;
     templateData: Record<string, any>;
-    attachments?: {
-        filename: string;
-        content: Buffer | string;
-        contentType?: string;
-    }[]
 }
 
 
-export const sendEmail = async ({ subject, templateName, templateData, to, attachments }: SendEmailOptions) => {
+export const sendEmail = async ({ subject, templateName, templateData, to }: SendEmailOptions) => {
     try {
         const templateFn = templates[templateName];
         if (!templateFn) {
@@ -135,19 +113,19 @@ export const sendEmail = async ({ subject, templateName, templateData, to, attac
 
         const html = templateFn(templateData);
 
-        const info = await transporter.sendMail({
-            from: envVars.EMAIL_SENDER.SMTP_FROM,
+        const { data, error } = await resend.emails.send({
+            from: "NexDrop <onboarding@resend.dev>",
             to,
             subject,
             html,
-            attachments: attachments?.map((attachment) => ({
-                filename: attachment.filename,
-                content: attachment.content,
-                contentType: attachment.contentType
-            }))
         });
 
-        console.log(`Email sent to ${to}: ${info.messageId}`);
+        if (error) {
+            console.error(`Resend error sending to ${to}:`, error);
+            throw new Error(error.message);
+        }
+
+        console.log(`Email sent to ${to}: ${data?.id}`);
 
     } catch (error: any) {
         console.error(`Error sending email to ${to}:`, error.message);
