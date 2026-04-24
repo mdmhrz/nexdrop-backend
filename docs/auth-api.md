@@ -6,6 +6,8 @@
 ## Authentication
 Most endpoints require authentication via session token or access token. Use the `checkAuth` middleware to protect routes.
 
+> **Cookie-based auth**: All token-bearing endpoints set `accessToken`, `refreshToken`, and `better-auth.session_token` as HTTP-only cookies in addition to returning them in the response body.
+
 ---
 
 ## Endpoints
@@ -39,9 +41,12 @@ Register a new user account.
       "id": "string",
       "name": "string",
       "email": "string",
+      "image": "string | null",
       "role": "CUSTOMER",
       "status": "ACTIVE",
-      "emailVerified": boolean
+      "emailVerified": false,
+      "createdAt": "2026-04-24T00:00:00.000Z",
+      "updatedAt": "2026-04-24T00:00:00.000Z"
     },
     "token": "string",
     "accessToken": "string",
@@ -49,6 +54,8 @@ Register a new user account.
   }
 }
 ```
+
+**Sets Cookies**: `accessToken`, `refreshToken`, `better-auth.session_token`
 
 **Error Responses**:
 - `409 Conflict`: User already exists with this email
@@ -72,15 +79,18 @@ Login with email and password.
 ```json
 {
   "success": true,
-  "message": "Login successful",
+  "message": "User logged in successfully",
   "data": {
     "user": {
       "id": "string",
       "name": "string",
       "email": "string",
+      "image": "string | null",
       "role": "CUSTOMER",
       "status": "ACTIVE",
-      "emailVerified": boolean
+      "emailVerified": true,
+      "createdAt": "2026-04-24T00:00:00.000Z",
+      "updatedAt": "2026-04-24T00:00:00.000Z"
     },
     "token": "string",
     "accessToken": "string",
@@ -89,8 +99,12 @@ Login with email and password.
 }
 ```
 
+**Sets Cookies**: `accessToken`, `refreshToken`, `better-auth.session_token`
+
 **Error Responses**:
 - `401 Unauthorized`: Invalid credentials
+- `403 Forbidden`: Account is blocked
+- `410 Gone`: Account has been deleted
 
 ---
 
@@ -109,50 +123,65 @@ Cookie: better-auth.session_token=<session_token>
 ```json
 {
   "success": true,
-  "message": "User profile fetched successfully",
+  "message": "User fetched successfully",
   "data": {
     "id": "string",
     "name": "string",
     "email": "string",
+    "emailVerified": true,
+    "image": "string | null",
+    "phone": "string | null",
     "role": "CUSTOMER",
     "status": "ACTIVE",
-    "emailVerified": boolean
+    "createdAt": "2026-04-24T00:00:00.000Z",
+    "updatedAt": "2026-04-24T00:00:00.000Z"
   }
 }
 ```
 
+**Error Responses**:
+- `404 Not Found`: User not found
+
 ---
 
 ### POST /auth/refresh-token
-Refresh access token using refresh token.
+Refresh access and refresh tokens using cookies.
 
 **Authentication**: Public (No authentication required)
 
-**Request Body**:
-```json
-{
-  "refreshToken": "string"
-}
-```
+> **Note**: This endpoint reads `refreshToken` and `better-auth.session_token` from **cookies**, not the request body. No request body is required.
+
+**Required Cookies**:
+- `refreshToken`: Current refresh token
+- `better-auth.session_token`: Current Better Auth session token
 
 **Success Response** (200):
 ```json
 {
   "success": true,
-  "message": "Token refreshed successfully",
+  "message": "User logged in successfully",
   "data": {
     "accessToken": "string",
-    "refreshToken": "string"
+    "refreshToken": "string",
+    "sessionToken": "string"
   }
 }
 ```
 
+**Sets Cookies**: `accessToken`, `refreshToken`, `better-auth.session_token`
+
+**Error Responses**:
+- `401 Unauthorized`: Missing or invalid refresh token / session token
+
 ---
 
 ### POST /auth/change-password
-Change user password.
+Change user password. Revokes all other active sessions.
 
 **Authentication**: Required (All roles: ADMIN, RIDER, SUPER_ADMIN, CUSTOMER)
+
+**Required Cookies**:
+- `better-auth.session_token`: Current Better Auth session token
 
 **Request Body**:
 ```json
@@ -170,39 +199,56 @@ Change user password.
 ```json
 {
   "success": true,
-  "message": "Password changed successfully"
+  "message": "Password changed successfully",
+  "data": {
+    "token": "string",
+    "accessToken": "string",
+    "refreshToken": "string"
+  }
 }
 ```
 
+**Sets Cookies**: `accessToken`, `refreshToken`, `better-auth.session_token`
+
 **Error Responses**:
-- `400 Bad Request`: Current password is incorrect
+- `400 Bad Request`: Current password is incorrect, or Google authenticated user cannot change password
+- `401 Unauthorized`: Invalid or missing session token
 
 ---
 
 ### POST /auth/logout
-Logout user and invalidate session.
+Logout user and invalidate session. Clears all auth cookies.
 
 **Authentication**: Required (All roles: ADMIN, RIDER, SUPER_ADMIN, CUSTOMER)
+
+**Required Cookies**:
+- `better-auth.session_token`: Current Better Auth session token
 
 **Success Response** (200):
 ```json
 {
   "success": true,
-  "message": "Logout successful"
+  "message": "User logged out successfully",
+  "data": {
+    "success": true
+  }
 }
 ```
+
+**Clears Cookies**: `accessToken`, `refreshToken`, `better-auth.session_token`
 
 ---
 
 ### POST /auth/verify-email
-Verify user email address.
+Verify user email address using OTP.
 
 **Authentication**: Public (No authentication required)
 
 **Request Body**:
 ```json
 {
-  "token": "string"
+  "email": "string (valid email)",
+  "otp": "string (6 digits)"
 }
 ```
 
@@ -215,12 +261,13 @@ Verify user email address.
 ```
 
 **Error Responses**:
-- `400 Bad Request`: Invalid or expired token
+- `400 Bad Request`: Invalid or expired OTP, or Google authenticated user
+- `404 Not Found`: User not found
 
 ---
 
 ### POST /auth/forget-password
-Request password reset email.
+Request a password reset OTP via email.
 
 **Authentication**: Public (No authentication required)
 
@@ -235,21 +282,26 @@ Request password reset email.
 ```json
 {
   "success": true,
-  "message": "Password reset email sent"
+  "message": "Password reset OTP sent to your email successfully"
 }
 ```
+
+**Error Responses**:
+- `400 Bad Request`: Email not verified, Google authenticated user, or account is deleted
+- `404 Not Found`: User not found
 
 ---
 
 ### POST /auth/reset-password
-Reset password with token.
+Reset password using OTP. Invalidates all active sessions after reset.
 
 **Authentication**: Public (No authentication required)
 
 **Request Body**:
 ```json
 {
-  "token": "string",
+  "email": "string (valid email)",
+  "otp": "string (6 digits)",
   "newPassword": "string (min 8 chars)"
 }
 ```
@@ -263,59 +315,80 @@ Reset password with token.
 ```
 
 **Error Responses**:
-- `400 Bad Request`: Invalid or expired token
+- `400 Bad Request`: Invalid or expired OTP, email not verified, Google authenticated user, or account is deleted
+- `404 Not Found`: User not found
 
 ---
 
-### GET /auth/login/google
-Initiate Google OAuth login.
+### POST /auth/resend-otp
+Resend the email verification OTP to the user's email address.
 
 **Authentication**: Public (No authentication required)
 
-Redirects to Google OAuth consent screen.
-
----
-
-### GET /auth/google/success
-Handle Google OAuth success callback.
-
-**Authentication**: Public (No authentication required)
+**Request Body**:
+```json
+{
+  "email": "string (valid email)"
+}
+```
 
 **Success Response** (200):
 ```json
 {
   "success": true,
-  "message": "Google login successful",
-  "data": {
-    "user": {
-      "id": "string",
-      "name": "string",
-      "email": "string",
-      "role": "CUSTOMER",
-      "status": "ACTIVE"
-    },
-    "token": "string",
-    "accessToken": "string",
-    "refreshToken": "string"
-  }
+  "message": "OTP sent successfully"
 }
 ```
+
+**Error Responses**:
+- `400 Bad Request`: Email already verified, Google authenticated user, or account is deleted
+- `404 Not Found`: User not found
+
+---
+
+### GET /auth/login/google
+Initiate Google OAuth login flow.
+
+**Authentication**: Public (No authentication required)
+
+**Query Parameters**:
+- `redirect` (optional): Path to redirect after successful login (default: `/dashboard`)
+
+**Behavior**: Renders an HTML page that initiates the Google OAuth flow. Upon success, redirects to `/api/v1/auth/google/success?redirect=<encodedPath>`.
+
+---
+
+### GET /auth/google/success
+Handle Google OAuth success callback — sets auth cookies and redirects to frontend.
+
+**Authentication**: Public (No authentication required)
+
+**Query Parameters**:
+- `redirect` (optional): Frontend path to redirect to after login (default: `/dashboard`). Must start with `/` and not `//`.
+
+**Required Cookies**:
+- `better-auth.session_token`: Set by Better Auth after Google OAuth completion
+
+**Behavior**: Validates session, generates `accessToken` and `refreshToken`, sets them as cookies, then redirects to `${FRONTEND_URL}${redirectPath}`.
+
+**Sets Cookies**: `accessToken`, `refreshToken`
+
+**On Failure**: Redirects to `${FRONTEND_URL}/login?error=<error_code>` where `error_code` is one of:
+- `oauth_failed`: Missing session cookie
+- `no_session_found`: Session not found
+- `no_user_found`: User not found in session
 
 ---
 
 ### GET /auth/oauth/error
-Handle OAuth error.
+Handle OAuth error — redirects to frontend login page.
 
 **Authentication**: Public (No authentication required)
 
-**Error Response** (400):
-```json
-{
-  "success": false,
-  "message": "OAuth authentication failed",
-  "error": "error details"
-}
-```
+**Query Parameters**:
+- `error` (optional): Error code to forward (default: `oauth_failed`)
+
+**Behavior**: Redirects to `${FRONTEND_URL}/login?error=<error>`.
 
 ---
 
@@ -325,5 +398,6 @@ Handle OAuth error.
 - `201 Created`: Resource created successfully
 - `400 Bad Request`: Invalid request data or parameters
 - `401 Unauthorized`: Authentication required or invalid credentials
-- `403 Forbidden`: User does not have permission
+- `403 Forbidden`: Account is blocked
 - `409 Conflict`: Resource already exists (e.g., duplicate email)
+- `410 Gone`: Account has been deleted

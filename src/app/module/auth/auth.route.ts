@@ -13,7 +13,8 @@ import {
     resetPasswordController,
     googleLoginController,
     googleLoginSuccessController,
-    handleOAuthErrorController
+    handleOAuthErrorController,
+    resendOtpController
 } from "./controllers";
 
 
@@ -50,6 +51,11 @@ router.post(
 router.post(
     '/verify-email',
     verifyEmailController
+)
+
+router.post(
+    '/resend-otp',
+    resendOtpController
 )
 
 router.post(

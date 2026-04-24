@@ -8,3 +8,4 @@ export * from "./auth.verify-email.service";
 export * from "./auth.forget-password.service";
 export * from "./auth.reset-password.service";
 export * from "./auth.google-login.service";
+export * from "./auth.resend-otp.service";
