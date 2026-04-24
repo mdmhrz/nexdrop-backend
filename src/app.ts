@@ -13,29 +13,40 @@ import { envVars } from './app/config/env';
 
 const app: Application = express();
 
+// Trust reverse proxy (required for Vercel / any proxy layer)
+app.set('trust proxy', true);
 
 // Set EJS as the view engine and specify the views directory
 app.set("view engine", "ejs");
 app.set("views", path.resolve(process.cwd(), "src/app/templates"));
+
+// CORS must be mounted before Better Auth and all other routes
+app.use(cors({
+    origin: (origin, callback) => {
+        const allowedOrigins = [
+            envVars.FRONTEND_URL,
+            envVars.BETTER_AUTH_URL,
+            "http://localhost:3000",
+            "http://localhost:5000",
+            "https://nex-drop-client.vercel.app"
+        ];
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS: origin ${origin} not allowed`));
+        }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"]
+}));
 
 // Stripe webhook - uses express.raw() for signature verification (must be before express.json)
 app.post('/api/v1/payments/webhook', express.raw({ type: 'application/json' }), webhookController);
 
 // Mount the authentication routes (Google OAuth, email/password, etc.)
 app.use("/api/auth", toNodeHandler(auth))
-
-app.use(cors({
-    origin: [
-        envVars.FRONTEND_URL,
-        envVars.BETTER_AUTH_URL,
-        "http://localhost:3000",
-        "http://localhost:5000",
-        "https://nex-drop-client.vercel.app"
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}))
 
 
 // Enable URL-encoded form data parsing

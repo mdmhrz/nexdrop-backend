@@ -2578,20 +2578,28 @@ var auth = betterAuth({
   },
   advanced: {
     // disableCSRFCheck: true,
-    useSecureCookies: envVars.NODE_ENV === "production",
+    useSecureCookies: true,
     cookies: {
       state: {
         attributes: {
-          sameSite: envVars.NODE_ENV === "production" ? "none" : "lax",
-          secure: envVars.NODE_ENV === "production",
+          sameSite: "none",
+          secure: true,
           httpOnly: true,
           path: "/"
         }
       },
       sessionToken: {
         attributes: {
-          sameSite: envVars.NODE_ENV === "production" ? "none" : "lax",
-          secure: envVars.NODE_ENV === "production",
+          sameSite: "none",
+          secure: true,
+          httpOnly: true,
+          path: "/"
+        }
+      },
+      sessionData: {
+        attributes: {
+          sameSite: "none",
+          secure: true,
           httpOnly: true,
           path: "/"
         }
@@ -5976,22 +5984,31 @@ var notFound_default = notFound;
 import { toNodeHandler } from "better-auth/node";
 import cors from "cors";
 var app = express();
+app.set("trust proxy", true);
 app.set("view engine", "ejs");
 app.set("views", path4.resolve(process.cwd(), "src/app/templates"));
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      envVars.FRONTEND_URL,
+      envVars.BETTER_AUTH_URL,
+      "http://localhost:3000",
+      "http://localhost:5000",
+      "https://nex-drop-client.vercel.app"
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  exposedHeaders: ["Set-Cookie"]
+}));
 app.post("/api/v1/payments/webhook", express.raw({ type: "application/json" }), webhookController);
 app.use("/api/auth", toNodeHandler(auth));
-app.use(cors({
-  origin: [
-    envVars.FRONTEND_URL,
-    envVars.BETTER_AUTH_URL,
-    "http://localhost:3000",
-    "http://localhost:5000",
-    "https://nex-drop-client.vercel.app"
-  ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
