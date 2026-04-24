@@ -82,3 +82,6 @@ process.on("unhandledRejection", (error) => {
 
 
 bootStrap();
+
+// Export app for Vercel serverless deployment
+export default app;

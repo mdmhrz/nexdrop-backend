@@ -1,11 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { envVars } from "../config/env";
 import AppError from "../errorHelper/AppError";
 import status from "http-status";
 
 
-const resend = new Resend(envVars.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+    host: envVars.EMAIL_SENDER.SMTP_HOST,
+    port: 587,
+    secure: false,
+    auth: {
+        user: envVars.EMAIL_SENDER.SMTP_USER,
+        pass: envVars.EMAIL_SENDER.SMTP_PASS
+    },
+});
 
 
 const templates: Record<string, (data: Record<string, any>) => string> = {
@@ -113,19 +121,14 @@ export const sendEmail = async ({ subject, templateName, templateData, to }: Sen
 
         const html = templateFn(templateData);
 
-        const { data, error } = await resend.emails.send({
-            from: "NexDrop <onboarding@resend.dev>",
+        const info = await transporter.sendMail({
+            from: envVars.EMAIL_SENDER.SMTP_FROM,
             to,
             subject,
             html,
         });
 
-        if (error) {
-            console.error(`Resend error sending to ${to}:`, error);
-            throw new Error(error.message);
-        }
-
-        console.log(`Email sent to ${to}: ${data?.id}`);
+        console.log(`Email sent to ${to}: ${info.messageId}`);
 
     } catch (error: any) {
         console.error(`Error sending email to ${to}:`, error.message);
