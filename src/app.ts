@@ -7,6 +7,8 @@ import notFound from './app/middleware/notFound';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './app/lib/auth';
 import { webhookController } from './app/module/payment/controllers';
+import cors from "cors";
+import { envVars } from './app/config/env';
 
 
 const app: Application = express();
@@ -21,6 +23,14 @@ app.post('/api/v1/payments/webhook', express.raw({ type: 'application/json' }), 
 
 // Mount the authentication routes (Google OAuth, email/password, etc.)
 app.use("/api/auth", toNodeHandler(auth))
+
+app.use(cors({
+    origin: [envVars.FRONTEND_URL, envVars.BETTER_AUTH_URL, "http://localhost:3000", "http://localhost:5000"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}))
+
 
 // Enable URL-encoded form data parsing
 app.use(express.urlencoded({ extended: true }));
