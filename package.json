@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/server.js",
-    "build": "prisma generate && tsup",
+    "start": "node api/server.js",
+    "build": "prisma generate && tsup src/server.ts --format esm --platform node --target node22 --outDir api --external pg-native",
     "dev": "tsx watch src/server.ts",
     "lint": "eslint . ./src",
     "migrate": "prisma migrate dev --name init",
