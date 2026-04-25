@@ -42,16 +42,37 @@ export const googleLoginSuccessController = catchAsync(
     async (req: Request, res: Response) => {
         const redirectPath = req.query.redirect as string || '/dashboard';
 
-        const sessionToken = req.cookies["better-auth.session_token"];
+        // Better Auth appends ?error=<code> to the callbackURL when OAuth fails
+        const oauthError = req.query.error as string | undefined;
+        if (oauthError) {
+            console.error("[Google OAuth] Better Auth callback error:", oauthError, req.query);
+            return res.redirect(`${envVars.FRONTEND_URL}/login?error=${encodeURIComponent(oauthError)}`);
+        }
+
+        const sessionToken = req.cookies["better-auth.session_token"]
+            ?? req.cookies["__Secure-better-auth.session_token"]
+            // fallback: parse raw Cookie header in case cookieParser missed it
+            ?? req.headers.cookie?.split(";").find(c => c.trim().startsWith("better-auth.session_token="))?.split("=").slice(1).join("=").trim()
+            ?? req.headers.cookie?.split(";").find(c => c.trim().startsWith("__Secure-better-auth.session_token="))?.split("=").slice(1).join("=").trim();
+
+        // Debug: log what cookies arrived (remove after confirming it works)
+        console.log("[Google OAuth] Cookies received:", Object.keys(req.cookies));
 
         if (!sessionToken) {
+            console.error("[Google OAuth] No session token cookie found. Available cookies:", req.cookies);
             return res.redirect(`${envVars.FRONTEND_URL}/login?error=oauth_failed`);
         }
 
+        // Build the Cookie header with whichever name was actually set
+        const isSecurePrefix = !!req.cookies["__Secure-better-auth.session_token"];
+        const cookieName = isSecurePrefix
+            ? "__Secure-better-auth.session_token"
+            : "better-auth.session_token";
+
         const session = await auth.api.getSession({
-            headers: ({
-                "Cookie": `better-auth.session_token=${sessionToken}`
-            })
+            headers: {
+                "Cookie": `${cookieName}=${sessionToken}`
+            }
         })
 
         if (!session) {

@@ -13,8 +13,11 @@ import { envVars } from './app/config/env';
 
 const app: Application = express();
 
-// Trust reverse proxy (required for Vercel / any proxy layer)
-app.set('trust proxy', true);
+// Trust reverse proxy only in production (required for Vercel / any proxy layer)
+// In development this causes Better Auth to set __Secure- cookie prefix on http://localhost
+if (envVars.NODE_ENV === "production") {
+    app.set('trust proxy', true);
+}
 
 // Set EJS as the view engine and specify the views directory
 app.set("view engine", "ejs");
