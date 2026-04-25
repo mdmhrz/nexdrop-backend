@@ -3269,13 +3269,22 @@ var googleLoginController = catchAsync(
 var googleLoginSuccessController = catchAsync(
   async (req, res) => {
     const redirectPath = req.query.redirect || "/dashboard";
-    const sessionToken = req.cookies["better-auth.session_token"];
+    const oauthError = req.query.error;
+    if (oauthError) {
+      console.error("[Google OAuth] Better Auth callback error:", oauthError, req.query);
+      return res.redirect(`${envVars.FRONTEND_URL}/login?error=${encodeURIComponent(oauthError)}`);
+    }
+    const sessionToken = req.cookies["better-auth.session_token"] ?? req.cookies["__Secure-better-auth.session_token"] ?? req.headers.cookie?.split(";").find((c) => c.trim().startsWith("better-auth.session_token="))?.split("=").slice(1).join("=").trim() ?? req.headers.cookie?.split(";").find((c) => c.trim().startsWith("__Secure-better-auth.session_token="))?.split("=").slice(1).join("=").trim();
+    console.log("[Google OAuth] Cookies received:", Object.keys(req.cookies));
     if (!sessionToken) {
+      console.error("[Google OAuth] No session token cookie found. Available cookies:", req.cookies);
       return res.redirect(`${envVars.FRONTEND_URL}/login?error=oauth_failed`);
     }
+    const isSecurePrefix = !!req.cookies["__Secure-better-auth.session_token"];
+    const cookieName = isSecurePrefix ? "__Secure-better-auth.session_token" : "better-auth.session_token";
     const session = await auth.api.getSession({
       headers: {
-        "Cookie": `better-auth.session_token=${sessionToken}`
+        "Cookie": `${cookieName}=${sessionToken}`
       }
     });
     if (!session) {
@@ -6047,7 +6056,9 @@ var notFound_default = notFound;
 import { toNodeHandler } from "better-auth/node";
 import cors from "cors";
 var app = express();
-app.set("trust proxy", true);
+if (envVars.NODE_ENV === "production") {
+  app.set("trust proxy", true);
+}
 app.set("view engine", "ejs");
 app.set("views", path3.resolve(process.cwd(), "src/app/templates"));
 app.use(cors({
