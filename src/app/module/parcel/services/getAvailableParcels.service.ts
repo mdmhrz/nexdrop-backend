@@ -68,7 +68,8 @@ export const getAvailableParcelsService = async (userId: string, userRole: UserR
         prisma.parcel.findMany({
             where: {
                 status: ParcelStatus.REQUESTED,
-                riderId: null
+                riderId: null,
+                isPaid: true
             },
             include: {
                 customer: {
@@ -89,7 +90,8 @@ export const getAvailableParcelsService = async (userId: string, userRole: UserR
         prisma.parcel.count({
             where: {
                 status: ParcelStatus.REQUESTED,
-                riderId: null
+                riderId: null,
+                isPaid: true
             }
         })
     ]);

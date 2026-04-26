@@ -491,7 +491,8 @@ var getAvailableParcelsService = async (userId, userRole, page = 1, limit = 10) 
     prisma.parcel.findMany({
       where: {
         status: ParcelStatus.REQUESTED,
-        riderId: null
+        riderId: null,
+        isPaid: true
       },
       include: {
         customer: {
@@ -512,7 +513,8 @@ var getAvailableParcelsService = async (userId, userRole, page = 1, limit = 10) 
     prisma.parcel.count({
       where: {
         status: ParcelStatus.REQUESTED,
-        riderId: null
+        riderId: null,
+        isPaid: true
       }
     })
   ]);
