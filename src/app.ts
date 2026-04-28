@@ -29,11 +29,14 @@ app.use(cors({
         const allowedOrigins = [
             envVars.FRONTEND_URL,
             envVars.BETTER_AUTH_URL,
+            envVars.BACKEND_URL,
             "http://localhost:3000",
             "http://localhost:5000",
             "https://nex-drop-client.vercel.app"
         ];
-        if (!origin || allowedOrigins.includes(origin)) {
+        // Allow requests with no origin (server-to-server) or "null" (opaque origin from
+        // payment gateway form POST redirects — SSLCommerz posts back with Origin: null)
+        if (!origin || origin === "null" || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
             callback(new Error(`CORS: origin ${origin} not allowed`));
