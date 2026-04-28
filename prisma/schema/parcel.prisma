@@ -11,6 +11,10 @@ model Parcel {
   districtFrom String
   districtTo   String
 
+  weight      Float       @default(1.0)
+  parcelType  ParcelType  @default(SMALL)
+  serviceType ServiceType @default(STANDARD)
+
   status ParcelStatus @default(REQUESTED)
 
   price  Float

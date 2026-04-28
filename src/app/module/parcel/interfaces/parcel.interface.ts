@@ -1,4 +1,4 @@
-import { ParcelStatus } from "../../../../generated/prisma/enums";
+import { ParcelStatus, ParcelType, ServiceType } from "../../../../generated/prisma/enums";
 
 export interface IPickParcelPayload {
     note?: string;
@@ -17,7 +17,9 @@ export interface ICreateParcelPayload {
     deliveryAddress: string;
     districtFrom: string;
     districtTo: string;
-    price: number;
+    weight: number;
+    parcelType: ParcelType;
+    serviceType: ServiceType;
     note?: string;
 }
 

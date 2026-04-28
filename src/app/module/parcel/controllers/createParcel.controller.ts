@@ -25,7 +25,9 @@ export const createParcelController = catchAsync(
             deliveryAddress: validatedPayload.deliveryAddress,
             districtFrom: validatedPayload.districtFrom,
             districtTo: validatedPayload.districtTo,
-            price: validatedPayload.price,
+            weight: validatedPayload.weight,
+            parcelType: validatedPayload.parcelType,
+            serviceType: validatedPayload.serviceType,
             note: validatedPayload.note
         };
 

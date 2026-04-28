@@ -57,6 +57,20 @@ enum CashoutStatus {
   PAID
 }
 
+enum ParcelType {
+  DOCUMENT
+  SMALL
+  MEDIUM
+  LARGE
+  FRAGILE
+  ELECTRONICS
+}
+
+enum ServiceType {
+  STANDARD
+  EXPRESS
+}
+
 enum NotificationType {
   INFO
   WARNING

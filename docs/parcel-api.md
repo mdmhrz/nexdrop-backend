@@ -28,9 +28,11 @@ Cookie: better-auth.session_token=<session_token>
 {
   "pickupAddress": "string (1-500 chars)",
   "deliveryAddress": "string (1-500 chars)",
-  "districtFrom": "string (1-255 chars)",
-  "districtTo": "string (1-255 chars)",
-  "price": "number (positive)",
+  "districtFrom": "string (valid Bangladesh district)",
+  "districtTo": "string (valid Bangladesh district)",
+  "weight": "number (positive, max 50 kg)",
+  "parcelType": "DOCUMENT | SMALL | MEDIUM | LARGE | FRAGILE | ELECTRONICS",
+  "serviceType": "STANDARD | EXPRESS (optional, default: STANDARD)",
   "note": "string (optional)"
 }
 ```
@@ -38,10 +40,32 @@ Cookie: better-auth.session_token=<session_token>
 **Validation**:
 - `pickupAddress`: Required, min 1 character, max 500 characters
 - `deliveryAddress`: Required, min 1 character, max 500 characters
-- `districtFrom`: Required, min 1 character, max 255 characters
-- `districtTo`: Required, min 1 character, max 255 characters
-- `price`: Required, must be a positive number
+- `districtFrom`: Required, must be a valid Bangladesh district name
+- `districtTo`: Required, must be a valid Bangladesh district name
+- `weight`: Required, positive number, max 50 kg
+- `parcelType`: Required, one of `DOCUMENT`, `SMALL`, `MEDIUM`, `LARGE`, `FRAGILE`, `ELECTRONICS`
+- `serviceType`: Optional, `STANDARD` or `EXPRESS` (default: `STANDARD`)
 - `note`: Optional
+
+**Pricing Rules** (server-calculated — price is never accepted from client):
+
+| Service Type | Same District | Inter-District |
+|---|---|---|
+| STANDARD | ৳60 | ৳120 |
+| EXPRESS | ৳110 | ৳200 |
+
+| Parcel Type | Surcharge |
+|---|---|
+| DOCUMENT | +৳0 |
+| SMALL | +৳0 |
+| MEDIUM | +৳20 |
+| LARGE | +৳50 |
+| FRAGILE | +৳50 |
+| ELECTRONICS | +৳70 |
+
+Weight above 1 kg: **+৳15 per kg** (rounded up)
+
+**Formula**: `price = base + typeSurcharge + ceil(max(0, weight - 1)) × 15`
 
 **Success Response** (201):
 ```json
@@ -57,8 +81,16 @@ Cookie: better-auth.session_token=<session_token>
     "deliveryAddress": "string",
     "districtFrom": "string",
     "districtTo": "string",
+    "weight": 1.5,
+    "parcelType": "ELECTRONICS",
+    "serviceType": "EXPRESS",
     "status": "REQUESTED",
-    "price": number,
+    "price": 247,
+    "priceBreakdown": {
+      "base": 110,
+      "typeSurcharge": 70,
+      "weightSurcharge": 15
+    },
     "isPaid": false,
     "createdAt": "datetime",
     "updatedAt": "datetime"
@@ -67,6 +99,8 @@ Cookie: better-auth.session_token=<session_token>
 ```
 
 **What happens internally**:
+- Validates district names against the full 64-district Bangladesh list
+- Calculates price server-side using weight, parcelType, serviceType, and district comparison
 - Generates unique tracking ID
 - Creates parcel with status = REQUESTED
 - Creates status log
