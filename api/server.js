@@ -5776,6 +5776,21 @@ var deleteRatingService = async (ratingId, customerId) => {
   }
   return { message: "Rating deleted successfully" };
 };
+var getMyRatingsService = async (customerId) => {
+  const ratings = await prisma.riderRating.findMany({
+    where: { customerId },
+    include: {
+      parcel: {
+        select: {
+          id: true,
+          trackingId: true
+        }
+      }
+    },
+    orderBy: { createdAt: "desc" }
+  });
+  return ratings;
+};
 var getRecentReviewsService = async (limit) => {
   const reviews = await prisma.riderRating.findMany({
     include: {
@@ -5887,6 +5902,16 @@ var getRecentReviewsController = catchAsync(async (req, res) => {
     data: reviews
   });
 });
+var getMyRatingsController = catchAsync(async (req, res) => {
+  const customerId = req.user.userId;
+  const ratings = await getMyRatingsService(customerId);
+  sendResponse(res, {
+    httpStatusCode: status79.OK,
+    success: true,
+    message: "My ratings fetched successfully",
+    data: ratings
+  });
+});
 
 // src/app/module/rating/routes/rating.route.ts
 var router8 = Router8();
@@ -5898,6 +5923,7 @@ router8.post(
 );
 router8.get("/rider/:riderId", getRiderRatingsController);
 router8.get("/rider/:riderId/summary", getRatingSummaryController);
+router8.get("/my", checkAuth(UserRole.CUSTOMER), getMyRatingsController);
 router8.patch(
   "/:id",
   checkAuth(UserRole.CUSTOMER),

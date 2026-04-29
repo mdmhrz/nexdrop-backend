@@ -6,6 +6,7 @@ import {
   updateRatingController,
   deleteRatingController,
   getRecentReviewsController,
+  getMyRatingsController,
 } from '../controllers';
 import { checkAuth } from '../../../middleware/checkAuth';
 import { validateRequest } from '../../../middleware/validateRequest';
@@ -27,6 +28,9 @@ router.get('/rider/:riderId', getRiderRatingsController);
 
 // GET /api/v1/ratings/rider/:riderId/summary - Get rating summary (PUBLIC)
 router.get('/rider/:riderId/summary', getRatingSummaryController);
+
+// GET /api/v1/ratings/my - Get my submitted ratings (CUSTOMER only)
+router.get('/my', checkAuth(UserRole.CUSTOMER), getMyRatingsController);
 
 // PATCH /api/v1/ratings/:id - Edit rating (CUSTOMER only, within 24h)
 router.patch(

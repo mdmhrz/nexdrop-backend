@@ -1,6 +1,7 @@
 import { prisma } from "../../../lib/prisma";
 import { ICancelParcelPayload } from "../interfaces/parcel.interface";
 import { ParcelStatus } from "../../../../generated/prisma/enums";
+import { Prisma } from "../../../../generated/prisma/client";
 import AppError from "../../../errorHelper/AppError";
 import status from "http-status";
 
@@ -21,7 +22,7 @@ export const cancelParcelService = async (customerId: string, parcelId: string, 
         throw new AppError(status.BAD_REQUEST, "Only parcels in REQUESTED status can be cancelled");
     }
 
-    const updatedParcel = await prisma.$transaction(async (tx: any) => {
+    const updatedParcel = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const updated = await tx.parcel.update({
             where: { id: parcelId },
             data: {

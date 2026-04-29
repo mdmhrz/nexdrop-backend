@@ -1,0 +1,10 @@
+-- CreateEnum
+CREATE TYPE "ParcelType" AS ENUM ('DOCUMENT', 'SMALL', 'MEDIUM', 'LARGE', 'FRAGILE', 'ELECTRONICS');
+
+-- CreateEnum
+CREATE TYPE "ServiceType" AS ENUM ('STANDARD', 'EXPRESS');
+
+-- AlterTable
+ALTER TABLE "parcel" ADD COLUMN     "parcelType" "ParcelType" NOT NULL DEFAULT 'SMALL',
+ADD COLUMN     "serviceType" "ServiceType" NOT NULL DEFAULT 'STANDARD',
+ADD COLUMN     "weight" DOUBLE PRECISION NOT NULL DEFAULT 1.0;

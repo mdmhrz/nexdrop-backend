@@ -1,6 +1,7 @@
 import { prisma } from "../../../lib/prisma";
 import AppError from "../../../errorHelper/AppError";
 import status from "http-status";
+import { Prisma } from "../../../../generated/prisma/client";
 import { IDeliverParcelPayload } from "../interfaces/parcel.interface";
 import { ParcelStatus, RiderStatus, RiderAccountStatus, EarningStatus } from "../../../../generated/prisma/enums";
 import { updateStatsCache, getStatsCache } from "../../../shared/services/statsCache.service";
@@ -34,7 +35,7 @@ export const deliverParcelService = async (riderId: string, parcelId: string, pa
         throw new AppError(status.BAD_REQUEST, "Parcel must be in IN_TRANSIT status to deliver");
     }
 
-    const updatedParcel = await prisma.$transaction(async (tx: any) => {
+    const updatedParcel = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         // Update parcel status
         const updated = await tx.parcel.update({
             where: { id: parcelId },

@@ -247,6 +247,23 @@ export const deleteRatingService = async (ratingId: string, customerId: string) 
   return { message: 'Rating deleted successfully' };
 };
 
+export const getMyRatingsService = async (customerId: string) => {
+  const ratings = await prisma.riderRating.findMany({
+    where: { customerId },
+    include: {
+      parcel: {
+        select: {
+          id: true,
+          trackingId: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return ratings;
+};
+
 export const getRecentReviewsService = async (limit: number) => {
   const reviews = await prisma.riderRating.findMany({
     include: {

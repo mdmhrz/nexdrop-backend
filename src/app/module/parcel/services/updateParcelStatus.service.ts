@@ -1,6 +1,7 @@
 import { prisma } from "../../../lib/prisma";
 import { IUpdateParcelStatusPayload } from "../interfaces/parcel.interface";
 import AppError from "../../../errorHelper/AppError";
+import { Prisma } from "../../../../generated/prisma/client";
 import status from "http-status";
 
 export const updateParcelStatusService = async (parcelId: string, payload: IUpdateParcelStatusPayload, adminId: string) => {
@@ -16,7 +17,7 @@ export const updateParcelStatusService = async (parcelId: string, payload: IUpda
         throw new AppError(status.BAD_REQUEST, "Parcel is already in the requested status");
     }
 
-    const updatedParcel = await prisma.$transaction(async (tx: any) => {
+    const updatedParcel = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const updated = await tx.parcel.update({
             where: { id: parcelId },
             data: {

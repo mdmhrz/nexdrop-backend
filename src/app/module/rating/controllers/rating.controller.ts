@@ -9,6 +9,7 @@ import {
   updateRatingService,
   deleteRatingService,
   getRecentReviewsService,
+  getMyRatingsService,
 } from '../services';
 import { submitRatingSchema, updateRatingSchema, getRatingsSchema } from '../validations';
 
@@ -87,5 +88,17 @@ export const getRecentReviewsController = catchAsync(async (req: Request, res: R
     success: true,
     message: 'Recent reviews fetched successfully',
     data: reviews,
+  });
+});
+
+export const getMyRatingsController = catchAsync(async (req: Request, res: Response) => {
+  const customerId = req.user!.userId;
+  const ratings = await getMyRatingsService(customerId);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: 'My ratings fetched successfully',
+    data: ratings,
   });
 });
