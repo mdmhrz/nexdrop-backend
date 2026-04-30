@@ -12,7 +12,8 @@ import {
     getAllParcelsController,
     assignRiderController,
     updateParcelStatusController,
-    initiateParcelPaymentController
+    initiateParcelPaymentController,
+    trackParcelController
 } from "./controllers";
 import { checkAuth } from "../../middleware/checkAuth";
 import { UserRole } from "../../../generated/prisma/enums";
@@ -123,6 +124,12 @@ router.patch(
     checkAuth(UserRole.RIDER),
     validateRequest(acceptParcelValidation),
     acceptParcelController
+);
+
+// GET /parcels/track/:trackingId - Track a parcel by tracking ID (Public)
+router.get(
+    '/track/:trackingId',
+    trackParcelController
 );
 
 // GET /parcels/:id - Get a specific parcel by ID (Customer, Rider, Admin & Super Admin) - Must be last

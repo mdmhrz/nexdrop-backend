@@ -39,7 +39,7 @@ var sendResponse = (res, responseData) => {
 };
 
 // src/app/module/parcel/controllers/getAvailableParcels.controller.ts
-import status12 from "http-status";
+import status13 from "http-status";
 
 // src/app/lib/prisma.ts
 import "dotenv/config";
@@ -1083,11 +1083,11 @@ var cancelParcelService = async (customerId, parcelId, payload) => {
 };
 
 // src/app/module/parcel/services/getAllParcels.service.ts
-var getAllParcelsService = async (page = 1, limit = 10, status83, district, date) => {
+var getAllParcelsService = async (page = 1, limit = 10, status85, district, date) => {
   const skip = (page - 1) * limit;
   const where = {};
-  if (status83) {
-    where.status = status83;
+  if (status85) {
+    where.status = status85;
   }
   if (district) {
     where.OR = [
@@ -1456,11 +1456,11 @@ var sslcommerzService = {
   verifyIPN(ipnData) {
     const storeId = envVars.SSLCOMMERZ.STORE_ID;
     const storePassword = envVars.SSLCOMMERZ.STORE_PASSWORD;
-    const status83 = ipnData.status;
+    const status85 = ipnData.status;
     const tranId = ipnData.tran_id;
     const amount = ipnData.amount;
     const currency = ipnData.currency;
-    const validationString = `${storeId},${amount},${currency},${tranId},${status83},${storePassword}`;
+    const validationString = `${storeId},${amount},${currency},${tranId},${status85},${storePassword}`;
     const calculatedHash = crypto.createHash("md5").update(validationString).digest("hex");
     return calculatedHash === ipnData.val_id;
   },
@@ -1622,10 +1622,10 @@ var paymentService = {
   /**
    * Update payment status
    */
-  async updatePaymentStatus(paymentId, status83) {
+  async updatePaymentStatus(paymentId, status85) {
     return await prisma.payment.update({
       where: { id: paymentId },
-      data: { status: status83 }
+      data: { status: status85 }
     });
   }
 };
@@ -1759,6 +1759,59 @@ var parcelPaymentService = {
 };
 var parcelPayment_service_default = parcelPaymentService;
 
+// src/app/module/parcel/services/trackParcel.service.ts
+import status12 from "http-status";
+var trackParcelService = async (trackingId) => {
+  const parcel = await prisma.parcel.findFirst({
+    where: {
+      trackingId: {
+        contains: trackingId,
+        mode: "insensitive"
+      }
+    },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true
+        }
+      },
+      rider: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true
+            }
+          }
+        }
+      },
+      statusLogs: {
+        orderBy: {
+          timestamp: "desc"
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          }
+        }
+      }
+    }
+  });
+  if (!parcel) {
+    throw new AppError_default(status12.NOT_FOUND, "Parcel not found");
+  }
+  return parcel;
+};
+
 // src/app/shared/pagination.ts
 var calculatePaginationMeta = (page, limit, total) => {
   const totalPages = Math.ceil(total / limit);
@@ -1790,7 +1843,7 @@ var getAvailableParcelsController = catchAsync(
     const userRole = req.user?.role;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status12.UNAUTHORIZED,
+        httpStatusCode: status13.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -1798,7 +1851,7 @@ var getAvailableParcelsController = catchAsync(
     }
     if (!userRole) {
       sendResponse(res, {
-        httpStatusCode: status12.UNAUTHORIZED,
+        httpStatusCode: status13.UNAUTHORIZED,
         success: false,
         message: "User role not found"
       });
@@ -1810,7 +1863,7 @@ var getAvailableParcelsController = catchAsync(
     );
     const result = await getAvailableParcelsService(userId, userRole, page, limit);
     sendResponse(res, {
-      httpStatusCode: status12.OK,
+      httpStatusCode: status13.OK,
       success: true,
       message: "Available parcels fetched successfully",
       data: result.data,
@@ -1820,13 +1873,13 @@ var getAvailableParcelsController = catchAsync(
 );
 
 // src/app/module/parcel/controllers/getAssignedParcels.controller.ts
-import status13 from "http-status";
+import status14 from "http-status";
 var getAssignedParcelsController = catchAsync(
   async (req, res) => {
     const riderId = req.user?.userId;
     if (!riderId) {
       sendResponse(res, {
-        httpStatusCode: status13.UNAUTHORIZED,
+        httpStatusCode: status14.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -1838,7 +1891,7 @@ var getAssignedParcelsController = catchAsync(
     );
     const result = await getAssignedParcelsService(riderId, page, limit);
     sendResponse(res, {
-      httpStatusCode: status13.OK,
+      httpStatusCode: status14.OK,
       success: true,
       message: "Assigned parcels fetched successfully",
       data: result.data,
@@ -1848,7 +1901,7 @@ var getAssignedParcelsController = catchAsync(
 );
 
 // src/app/module/parcel/controllers/pickParcel.controller.ts
-import status14 from "http-status";
+import status15 from "http-status";
 
 // src/app/module/parcel/validations/parcel.validation.ts
 import { z } from "zod";
@@ -1963,7 +2016,7 @@ var pickParcelController = catchAsync(
     const parcelId = req.params.id;
     if (!riderId) {
       sendResponse(res, {
-        httpStatusCode: status14.UNAUTHORIZED,
+        httpStatusCode: status15.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -1975,7 +2028,7 @@ var pickParcelController = catchAsync(
     };
     const parcel = await pickParcelService(riderId, parcelId, payload);
     sendResponse(res, {
-      httpStatusCode: status14.OK,
+      httpStatusCode: status15.OK,
       success: true,
       message: "Parcel picked up successfully",
       data: parcel
@@ -1984,36 +2037,8 @@ var pickParcelController = catchAsync(
 );
 
 // src/app/module/parcel/controllers/deliverParcel.controller.ts
-import status15 from "http-status";
-var deliverParcelController = catchAsync(
-  async (req, res) => {
-    const riderId = req.user?.userId;
-    const parcelId = req.params.id;
-    if (!riderId) {
-      sendResponse(res, {
-        httpStatusCode: status15.UNAUTHORIZED,
-        success: false,
-        message: "Unauthorized access"
-      });
-      return;
-    }
-    const validatedPayload = deliverParcelValidation.parse(req.body);
-    const payload = {
-      note: validatedPayload.note
-    };
-    const parcel = await deliverParcelService(riderId, parcelId, payload);
-    sendResponse(res, {
-      httpStatusCode: status15.OK,
-      success: true,
-      message: "Parcel delivered successfully",
-      data: parcel
-    });
-  }
-);
-
-// src/app/module/parcel/controllers/acceptParcel.controller.ts
 import status16 from "http-status";
-var acceptParcelController = catchAsync(
+var deliverParcelController = catchAsync(
   async (req, res) => {
     const riderId = req.user?.userId;
     const parcelId = req.params.id;
@@ -2025,13 +2050,41 @@ var acceptParcelController = catchAsync(
       });
       return;
     }
+    const validatedPayload = deliverParcelValidation.parse(req.body);
+    const payload = {
+      note: validatedPayload.note
+    };
+    const parcel = await deliverParcelService(riderId, parcelId, payload);
+    sendResponse(res, {
+      httpStatusCode: status16.OK,
+      success: true,
+      message: "Parcel delivered successfully",
+      data: parcel
+    });
+  }
+);
+
+// src/app/module/parcel/controllers/acceptParcel.controller.ts
+import status17 from "http-status";
+var acceptParcelController = catchAsync(
+  async (req, res) => {
+    const riderId = req.user?.userId;
+    const parcelId = req.params.id;
+    if (!riderId) {
+      sendResponse(res, {
+        httpStatusCode: status17.UNAUTHORIZED,
+        success: false,
+        message: "Unauthorized access"
+      });
+      return;
+    }
     const validatedPayload = acceptParcelValidation.parse(req.body);
     const payload = {
       note: validatedPayload.note
     };
     const parcel = await acceptParcelService(riderId, parcelId, payload);
     sendResponse(res, {
-      httpStatusCode: status16.OK,
+      httpStatusCode: status17.OK,
       success: true,
       message: "Parcel accepted successfully",
       data: parcel
@@ -2040,13 +2093,13 @@ var acceptParcelController = catchAsync(
 );
 
 // src/app/module/parcel/controllers/createParcel.controller.ts
-import status17 from "http-status";
+import status18 from "http-status";
 var createParcelController = catchAsync(
   async (req, res) => {
     const customerId = req.user?.userId;
     if (!customerId) {
       sendResponse(res, {
-        httpStatusCode: status17.UNAUTHORIZED,
+        httpStatusCode: status18.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -2065,7 +2118,7 @@ var createParcelController = catchAsync(
     };
     const parcel = await createParcelService(customerId, payload);
     sendResponse(res, {
-      httpStatusCode: status17.CREATED,
+      httpStatusCode: status18.CREATED,
       success: true,
       message: "Parcel created successfully",
       data: parcel
@@ -2074,13 +2127,13 @@ var createParcelController = catchAsync(
 );
 
 // src/app/module/parcel/controllers/getMyParcels.controller.ts
-import status18 from "http-status";
+import status19 from "http-status";
 var getMyParcelsController = catchAsync(
   async (req, res) => {
     const customerId = req.user?.userId;
     if (!customerId) {
       sendResponse(res, {
-        httpStatusCode: status18.UNAUTHORIZED,
+        httpStatusCode: status19.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -2092,7 +2145,7 @@ var getMyParcelsController = catchAsync(
     );
     const result = await getMyParcelsService(customerId, page, limit);
     sendResponse(res, {
-      httpStatusCode: status18.OK,
+      httpStatusCode: status19.OK,
       success: true,
       message: "My parcels fetched successfully",
       data: result.data,
@@ -2102,7 +2155,7 @@ var getMyParcelsController = catchAsync(
 );
 
 // src/app/module/parcel/controllers/getParcelById.controller.ts
-import status19 from "http-status";
+import status20 from "http-status";
 var getParcelByIdController = catchAsync(
   async (req, res) => {
     const userId = req.user?.userId;
@@ -2110,7 +2163,7 @@ var getParcelByIdController = catchAsync(
     const parcelId = req.params.id;
     if (!userId || !userRole) {
       sendResponse(res, {
-        httpStatusCode: status19.UNAUTHORIZED,
+        httpStatusCode: status20.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -2118,7 +2171,7 @@ var getParcelByIdController = catchAsync(
     }
     const parcel = await getParcelByIdService(parcelId, userId, userRole);
     sendResponse(res, {
-      httpStatusCode: status19.OK,
+      httpStatusCode: status20.OK,
       success: true,
       message: "Parcel fetched successfully",
       data: parcel
@@ -2127,14 +2180,14 @@ var getParcelByIdController = catchAsync(
 );
 
 // src/app/module/parcel/controllers/cancelParcel.controller.ts
-import status20 from "http-status";
+import status21 from "http-status";
 var cancelParcelController = catchAsync(
   async (req, res) => {
     const customerId = req.user?.userId;
     const parcelId = req.params.id;
     if (!customerId) {
       sendResponse(res, {
-        httpStatusCode: status20.UNAUTHORIZED,
+        httpStatusCode: status21.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -2146,7 +2199,7 @@ var cancelParcelController = catchAsync(
     };
     const parcel = await cancelParcelService(customerId, parcelId, payload);
     sendResponse(res, {
-      httpStatusCode: status20.OK,
+      httpStatusCode: status21.OK,
       success: true,
       message: "Parcel cancelled successfully",
       data: parcel
@@ -2155,7 +2208,7 @@ var cancelParcelController = catchAsync(
 );
 
 // src/app/module/parcel/controllers/getAllParcels.controller.ts
-import status21 from "http-status";
+import status22 from "http-status";
 var getAllParcelsController = catchAsync(
   async (req, res) => {
     const { page, limit } = getPaginationParams(
@@ -2173,7 +2226,7 @@ var getAllParcelsController = catchAsync(
       dateFilter
     );
     sendResponse(res, {
-      httpStatusCode: status21.OK,
+      httpStatusCode: status22.OK,
       success: true,
       message: "Parcels fetched successfully",
       data: result.data,
@@ -2183,14 +2236,14 @@ var getAllParcelsController = catchAsync(
 );
 
 // src/app/module/parcel/controllers/assignRider.controller.ts
-import status22 from "http-status";
+import status23 from "http-status";
 var assignRiderController = catchAsync(
   async (req, res) => {
     const adminId = req.user?.userId;
     const parcelId = req.params.id;
     if (!adminId) {
       sendResponse(res, {
-        httpStatusCode: status22.UNAUTHORIZED,
+        httpStatusCode: status23.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -2203,7 +2256,7 @@ var assignRiderController = catchAsync(
     };
     const parcel = await assignRiderService(parcelId, payload, adminId);
     sendResponse(res, {
-      httpStatusCode: status22.OK,
+      httpStatusCode: status23.OK,
       success: true,
       message: "Rider assigned successfully",
       data: parcel
@@ -2212,14 +2265,14 @@ var assignRiderController = catchAsync(
 );
 
 // src/app/module/parcel/controllers/updateParcelStatus.controller.ts
-import status23 from "http-status";
+import status24 from "http-status";
 var updateParcelStatusController = catchAsync(
   async (req, res) => {
     const adminId = req.user?.userId;
     const parcelId = req.params.id;
     if (!adminId) {
       sendResponse(res, {
-        httpStatusCode: status23.UNAUTHORIZED,
+        httpStatusCode: status24.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -2232,7 +2285,7 @@ var updateParcelStatusController = catchAsync(
     };
     const parcel = await updateParcelStatusService(parcelId, payload, adminId);
     sendResponse(res, {
-      httpStatusCode: status23.OK,
+      httpStatusCode: status24.OK,
       success: true,
       message: "Parcel status updated successfully",
       data: parcel
@@ -2241,14 +2294,14 @@ var updateParcelStatusController = catchAsync(
 );
 
 // src/app/module/parcel/controllers/initiateParcelPayment.controller.ts
-import status24 from "http-status";
+import status25 from "http-status";
 var initiateParcelPaymentController = catchAsync(
   async (req, res) => {
     const customerId = req.user?.userId;
     const parcelId = req.params.id;
     if (!customerId) {
       sendResponse(res, {
-        httpStatusCode: status24.UNAUTHORIZED,
+        httpStatusCode: status25.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -2261,10 +2314,25 @@ var initiateParcelPaymentController = catchAsync(
       customerId
     );
     sendResponse(res, {
-      httpStatusCode: status24.OK,
+      httpStatusCode: status25.OK,
       success: true,
       message: "Payment initiated successfully",
       data: result
+    });
+  }
+);
+
+// src/app/module/parcel/controllers/trackParcel.controller.ts
+import status26 from "http-status";
+var trackParcelController = catchAsync(
+  async (req, res) => {
+    const trackingId = req.params.trackingId;
+    const parcel = await trackParcelService(trackingId);
+    sendResponse(res, {
+      httpStatusCode: status26.OK,
+      success: true,
+      message: "Parcel fetched successfully",
+      data: parcel
     });
   }
 );
@@ -2286,7 +2354,7 @@ var cookieUtils = {
 };
 
 // src/app/middleware/checkAuth.ts
-import status25 from "http-status";
+import status27 from "http-status";
 
 // src/app/utils/jwt.ts
 import jwt from "jsonwebtoken";
@@ -2324,7 +2392,7 @@ var checkAuth = (...authRoles) => {
     try {
       const rawSessionToken = cookieUtils.getCookie(req, "better-auth.session_token");
       if (!rawSessionToken) {
-        throw new AppError_default(status25.UNAUTHORIZED, "Unauthorized access! no session token provided");
+        throw new AppError_default(status27.UNAUTHORIZED, "Unauthorized access! no session token provided");
       }
       const sessionToken = rawSessionToken.split(".")[0];
       if (sessionToken) {
@@ -2340,7 +2408,7 @@ var checkAuth = (...authRoles) => {
           }
         });
         if (!sessionExist || !sessionExist.user) {
-          throw new AppError_default(status25.UNAUTHORIZED, "Unauthorized access! Invalid session token");
+          throw new AppError_default(status27.UNAUTHORIZED, "Unauthorized access! Invalid session token");
         }
         if (sessionExist && sessionExist.user) {
           const user = sessionExist.user;
@@ -2357,11 +2425,11 @@ var checkAuth = (...authRoles) => {
             console.log("Session token is about to expire.");
           }
           if (user.status === UserStatus.BLOCKED || user.status === UserStatus.DELETED) {
-            throw new AppError_default(status25.FORBIDDEN, `Your account has been ${user.status === UserStatus.BLOCKED ? "blocked" : "deleted"}. Please contact support.`);
+            throw new AppError_default(status27.FORBIDDEN, `Your account has been ${user.status === UserStatus.BLOCKED ? "blocked" : "deleted"}. Please contact support.`);
           }
           if (authRoles.length > 0 && !authRoles.includes(user.role)) {
             console.log("User role:", user.role, "Required roles:", authRoles);
-            throw new AppError_default(status25.FORBIDDEN, "You are not authorized to access this resource");
+            throw new AppError_default(status27.FORBIDDEN, "You are not authorized to access this resource");
           }
           req.user = {
             userId: user.id,
@@ -2372,14 +2440,14 @@ var checkAuth = (...authRoles) => {
       }
       const accessToken = cookieUtils.getCookie(req, "accessToken");
       if (!accessToken) {
-        throw new AppError_default(status25.UNAUTHORIZED, "Unauthorized access! no access token provided");
+        throw new AppError_default(status27.UNAUTHORIZED, "Unauthorized access! no access token provided");
       }
       const verifiedToken = jwtUtils.verifyToken(accessToken, envVars.ACCESS_TOKEN_SECRET);
       if (!verifiedToken.success) {
-        throw new AppError_default(status25.UNAUTHORIZED, "Unauthorized access! invalid access token provided");
+        throw new AppError_default(status27.UNAUTHORIZED, "Unauthorized access! invalid access token provided");
       }
       if (authRoles.length > 0 && !authRoles.includes(verifiedToken.data.role)) {
-        throw new AppError_default(status25.UNAUTHORIZED, "Forbidden access! you do not have permission to access this route");
+        throw new AppError_default(status27.UNAUTHORIZED, "Forbidden access! you do not have permission to access this route");
       }
       next();
     } catch (error) {
@@ -2477,6 +2545,10 @@ router.patch(
   acceptParcelController
 );
 router.get(
+  "/track/:trackingId",
+  trackParcelController
+);
+router.get(
   "/:id",
   checkAuth(UserRole.CUSTOMER, UserRole.RIDER, UserRole.ADMIN, UserRole.SUPER_ADMIN),
   getParcelByIdController
@@ -2539,10 +2611,10 @@ var tokenUtils = {
 };
 
 // src/app/module/auth/controllers/auth.register.controller.ts
-import status28 from "http-status";
+import status30 from "http-status";
 
 // src/app/module/auth/services/auth.register.service.ts
-import status27 from "http-status";
+import status29 from "http-status";
 
 // src/app/lib/auth.ts
 import { betterAuth } from "better-auth";
@@ -2551,7 +2623,7 @@ import { bearer, emailOTP } from "better-auth/plugins";
 
 // src/app/utils/email.ts
 import nodemailer from "nodemailer";
-import status26 from "http-status";
+import status28 from "http-status";
 var transporter = nodemailer.createTransport({
   host: envVars.EMAIL_SENDER.SMTP_HOST,
   port: 587,
@@ -2640,7 +2712,7 @@ var sendEmail = async ({ subject, templateName, templateData, to }) => {
     console.log(`Email sent to ${to}: ${info.messageId}`);
   } catch (error) {
     console.error(`Error sending email to ${to}:`, error.message);
-    throw new AppError_default(status26.INTERNAL_SERVER_ERROR, "Failed to send email");
+    throw new AppError_default(status28.INTERNAL_SERVER_ERROR, "Failed to send email");
   }
 };
 
@@ -2804,7 +2876,7 @@ var registerService = async (payload) => {
   const { name, email, password } = payload;
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
-    throw new AppError_default(status27.CONFLICT, "User already exists. Use another email.");
+    throw new AppError_default(status29.CONFLICT, "User already exists. Use another email.");
   }
   const data = await auth.api.signUpEmail({
     body: {
@@ -2814,7 +2886,7 @@ var registerService = async (payload) => {
     }
   });
   if (!data.user) {
-    throw new AppError_default(status27.BAD_REQUEST, "Failed to register user");
+    throw new AppError_default(status29.BAD_REQUEST, "Failed to register user");
   }
   await updateStatsCache({
     totalUsers: { increment: 1 },
@@ -2858,7 +2930,7 @@ var registerController = catchAsync(
     tokenUtils.setRefreshTokenCookie(res, refreshToken);
     tokenUtils.setBetterAuthSessionCookie(res, token);
     sendResponse(res, {
-      httpStatusCode: status28.CREATED,
+      httpStatusCode: status30.CREATED,
       success: true,
       message: "User registered successfully",
       data: {
@@ -2872,10 +2944,10 @@ var registerController = catchAsync(
 );
 
 // src/app/module/auth/controllers/auth.login.controller.ts
-import status36 from "http-status";
+import status38 from "http-status";
 
 // src/app/module/auth/services/auth.login.service.ts
-import status29 from "http-status";
+import status31 from "http-status";
 var loginService = async (payload) => {
   const { email, password } = payload;
   const data = await auth.api.signInEmail({
@@ -2885,10 +2957,10 @@ var loginService = async (payload) => {
     }
   });
   if (data?.user.status === UserStatus.BLOCKED) {
-    throw new AppError_default(status29.FORBIDDEN, "Your account has been blocked. Please contact support.");
+    throw new AppError_default(status31.FORBIDDEN, "Your account has been blocked. Please contact support.");
   }
   if (data?.user?.status === UserStatus.DELETED) {
-    throw new AppError_default(status29.GONE, "Your account has been deleted. Please contact support.");
+    throw new AppError_default(status31.GONE, "Your account has been deleted. Please contact support.");
   }
   const accessToken = tokenUtils.getAccessToken({
     userId: data.user.id,
@@ -2927,7 +2999,7 @@ var getMeService = async (id) => {
 };
 
 // src/app/module/auth/services/auth.get-new-token.service.ts
-import status30 from "http-status";
+import status32 from "http-status";
 var getNewTokenService = async (refreshToken, sessionToken) => {
   const isSessionExist = await prisma.session.findUnique({
     where: {
@@ -2938,11 +3010,11 @@ var getNewTokenService = async (refreshToken, sessionToken) => {
     }
   });
   if (!isSessionExist || !isSessionExist.user) {
-    throw new AppError_default(status30.UNAUTHORIZED, "Unauthorized access! Invalid session token");
+    throw new AppError_default(status32.UNAUTHORIZED, "Unauthorized access! Invalid session token");
   }
   const verifyRefreshToken = jwtUtils.verifyToken(refreshToken, envVars.REFRESH_TOKEN_SECRET);
   if (!verifyRefreshToken.success && verifyRefreshToken.error) {
-    throw new AppError_default(status30.UNAUTHORIZED, "Unauthorized access! Invalid refresh token");
+    throw new AppError_default(status32.UNAUTHORIZED, "Unauthorized access! Invalid refresh token");
   }
   const data = verifyRefreshToken.data;
   const newAccessToken = tokenUtils.getAccessToken({
@@ -2979,7 +3051,7 @@ var getNewTokenService = async (refreshToken, sessionToken) => {
 };
 
 // src/app/module/auth/services/auth.change-password.service.ts
-import status31 from "http-status";
+import status33 from "http-status";
 var changePasswordService = async (payload, sessionToken) => {
   const session = await auth.api.getSession({
     headers: new Headers({
@@ -2987,7 +3059,7 @@ var changePasswordService = async (payload, sessionToken) => {
     })
   });
   if (!session) {
-    throw new AppError_default(status31.UNAUTHORIZED, "Unauthorized access! Invalid session token");
+    throw new AppError_default(status33.UNAUTHORIZED, "Unauthorized access! Invalid session token");
   }
   const isGoogleAuthenticatedUser = await prisma.account.findFirst({
     where: {
@@ -2996,7 +3068,7 @@ var changePasswordService = async (payload, sessionToken) => {
     }
   });
   if (isGoogleAuthenticatedUser) {
-    throw new AppError_default(status31.BAD_REQUEST, "Google authenticated users can not change password");
+    throw new AppError_default(status33.BAD_REQUEST, "Google authenticated users can not change password");
   }
   const { currentPassword, newPassword } = payload;
   const result = await auth.api.changePassword({
@@ -3043,7 +3115,7 @@ var logoutService = async (sessionToken) => {
 };
 
 // src/app/module/auth/services/auth.verify-email.service.ts
-import status32 from "http-status";
+import status34 from "http-status";
 var verifyEmailService = async (email, otp) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -3051,7 +3123,7 @@ var verifyEmailService = async (email, otp) => {
     }
   });
   if (!user) {
-    throw new AppError_default(status32.NOT_FOUND, "User not found");
+    throw new AppError_default(status34.NOT_FOUND, "User not found");
   }
   const isGoogleAuthenticatedUser = await prisma.account.findFirst({
     where: {
@@ -3060,7 +3132,7 @@ var verifyEmailService = async (email, otp) => {
     }
   });
   if (isGoogleAuthenticatedUser) {
-    throw new AppError_default(status32.BAD_REQUEST, "Google authenticated users can not verify email");
+    throw new AppError_default(status34.BAD_REQUEST, "Google authenticated users can not verify email");
   }
   const result = await auth.api.verifyEmailOTP({
     body: {
@@ -3081,7 +3153,7 @@ var verifyEmailService = async (email, otp) => {
 };
 
 // src/app/module/auth/services/auth.forget-password.service.ts
-import status33 from "http-status";
+import status35 from "http-status";
 var forgetPasswordService = async (email) => {
   const isUserExist = await prisma.user.findUnique({
     where: {
@@ -3089,7 +3161,7 @@ var forgetPasswordService = async (email) => {
     }
   });
   if (!isUserExist) {
-    throw new AppError_default(status33.NOT_FOUND, "User not found");
+    throw new AppError_default(status35.NOT_FOUND, "User not found");
   }
   const isGoogleAuthenticatedUser = await prisma.account.findFirst({
     where: {
@@ -3098,13 +3170,13 @@ var forgetPasswordService = async (email) => {
     }
   });
   if (isGoogleAuthenticatedUser) {
-    throw new AppError_default(status33.BAD_REQUEST, "Google authenticated users can not reset password");
+    throw new AppError_default(status35.BAD_REQUEST, "Google authenticated users can not reset password");
   }
   if (!isUserExist.emailVerified) {
-    throw new AppError_default(status33.BAD_REQUEST, "Email is not verified");
+    throw new AppError_default(status35.BAD_REQUEST, "Email is not verified");
   }
   if (isUserExist.status === UserStatus.DELETED) {
-    throw new AppError_default(status33.BAD_REQUEST, "User is deleted");
+    throw new AppError_default(status35.BAD_REQUEST, "User is deleted");
   }
   await auth.api.requestPasswordResetEmailOTP({
     body: {
@@ -3114,7 +3186,7 @@ var forgetPasswordService = async (email) => {
 };
 
 // src/app/module/auth/services/auth.reset-password.service.ts
-import status34 from "http-status";
+import status36 from "http-status";
 var resetPasswordService = async (email, otp, newPassword) => {
   const isUserExist = await prisma.user.findUnique({
     where: {
@@ -3122,7 +3194,7 @@ var resetPasswordService = async (email, otp, newPassword) => {
     }
   });
   if (!isUserExist) {
-    throw new AppError_default(status34.NOT_FOUND, "User not found");
+    throw new AppError_default(status36.NOT_FOUND, "User not found");
   }
   const isGoogleAuthenticatedUser = await prisma.account.findFirst({
     where: {
@@ -3131,13 +3203,13 @@ var resetPasswordService = async (email, otp, newPassword) => {
     }
   });
   if (isGoogleAuthenticatedUser) {
-    throw new AppError_default(status34.BAD_REQUEST, "Google authenticated users can not reset password");
+    throw new AppError_default(status36.BAD_REQUEST, "Google authenticated users can not reset password");
   }
   if (!isUserExist.emailVerified) {
-    throw new AppError_default(status34.BAD_REQUEST, "Email is not verified");
+    throw new AppError_default(status36.BAD_REQUEST, "Email is not verified");
   }
   if (isUserExist.status === UserStatus.DELETED) {
-    throw new AppError_default(status34.BAD_REQUEST, "User is deleted");
+    throw new AppError_default(status36.BAD_REQUEST, "User is deleted");
   }
   await auth.api.resetPasswordEmailOTP({
     body: {
@@ -3174,7 +3246,7 @@ var googleLoginService = async (session) => {
 };
 
 // src/app/module/auth/services/auth.resend-otp.service.ts
-import status35 from "http-status";
+import status37 from "http-status";
 var resendOtpService = async (email) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -3182,7 +3254,7 @@ var resendOtpService = async (email) => {
     }
   });
   if (!user) {
-    throw new AppError_default(status35.NOT_FOUND, "User not found");
+    throw new AppError_default(status37.NOT_FOUND, "User not found");
   }
   const isGoogleAuthenticatedUser = await prisma.account.findFirst({
     where: {
@@ -3191,13 +3263,13 @@ var resendOtpService = async (email) => {
     }
   });
   if (isGoogleAuthenticatedUser) {
-    throw new AppError_default(status35.BAD_REQUEST, "Google authenticated users do not require email verification");
+    throw new AppError_default(status37.BAD_REQUEST, "Google authenticated users do not require email verification");
   }
   if (user.emailVerified) {
-    throw new AppError_default(status35.BAD_REQUEST, "Email is already verified");
+    throw new AppError_default(status37.BAD_REQUEST, "Email is already verified");
   }
   if (user.status === UserStatus.DELETED) {
-    throw new AppError_default(status35.BAD_REQUEST, "User is deleted");
+    throw new AppError_default(status37.BAD_REQUEST, "User is deleted");
   }
   await auth.api.sendVerificationOTP({
     body: {
@@ -3217,7 +3289,7 @@ var loginController = catchAsync(
     tokenUtils.setRefreshTokenCookie(res, refreshToken);
     tokenUtils.setBetterAuthSessionCookie(res, token);
     sendResponse(res, {
-      httpStatusCode: status36.OK,
+      httpStatusCode: status38.OK,
       success: true,
       message: "User logged in successfully",
       data: {
@@ -3231,7 +3303,7 @@ var loginController = catchAsync(
 );
 
 // src/app/module/auth/controllers/auth.me.controller.ts
-import status37 from "http-status";
+import status39 from "http-status";
 var getMeController = catchAsync(
   async (req, res) => {
     const user = req.user;
@@ -3240,7 +3312,7 @@ var getMeController = catchAsync(
     }
     const result = await getMeService(user.userId);
     sendResponse(res, {
-      httpStatusCode: status37.OK,
+      httpStatusCode: status39.OK,
       success: true,
       message: "User fetched successfully",
       data: result
@@ -3249,7 +3321,7 @@ var getMeController = catchAsync(
 );
 
 // src/app/module/auth/controllers/auth.get-new-token.controller.ts
-import status38 from "http-status";
+import status40 from "http-status";
 var getNewTokenController = catchAsync(
   async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
@@ -3259,7 +3331,7 @@ var getNewTokenController = catchAsync(
       betterAuthSessionToken
     });
     if (!refreshToken && !betterAuthSessionToken) {
-      throw new AppError_default(status38.UNAUTHORIZED, "Unauthorized access! no refresh token provided");
+      throw new AppError_default(status40.UNAUTHORIZED, "Unauthorized access! no refresh token provided");
     }
     const result = await getNewTokenService(refreshToken, betterAuthSessionToken);
     const {
@@ -3271,7 +3343,7 @@ var getNewTokenController = catchAsync(
     tokenUtils.setRefreshTokenCookie(res, newRefreshToken);
     tokenUtils.setBetterAuthSessionCookie(res, sessionToken);
     sendResponse(res, {
-      httpStatusCode: status38.OK,
+      httpStatusCode: status40.OK,
       success: true,
       message: "User logged in successfully",
       data: {
@@ -3284,7 +3356,7 @@ var getNewTokenController = catchAsync(
 );
 
 // src/app/module/auth/controllers/auth.change-password.controller.ts
-import status39 from "http-status";
+import status41 from "http-status";
 var changePasswordController = catchAsync(
   async (req, res) => {
     const payload = req.body;
@@ -3299,7 +3371,7 @@ var changePasswordController = catchAsync(
     tokenUtils.setRefreshTokenCookie(res, refreshToken);
     tokenUtils.setBetterAuthSessionCookie(res, token);
     sendResponse(res, {
-      httpStatusCode: status39.OK,
+      httpStatusCode: status41.OK,
       success: true,
       message: "Password changed successfully",
       data: result
@@ -3308,7 +3380,7 @@ var changePasswordController = catchAsync(
 );
 
 // src/app/module/auth/controllers/auth.logout.controller.ts
-import status40 from "http-status";
+import status42 from "http-status";
 var logoutController = catchAsync(
   async (req, res) => {
     const betterAuthSessionToken = req.cookies["better-auth.session_token"];
@@ -3332,7 +3404,7 @@ var logoutController = catchAsync(
       path: "/"
     });
     sendResponse(res, {
-      httpStatusCode: status40.OK,
+      httpStatusCode: status42.OK,
       success: true,
       message: "User logged out successfully",
       data: result
@@ -3341,13 +3413,13 @@ var logoutController = catchAsync(
 );
 
 // src/app/module/auth/controllers/auth.verify-email.controller.ts
-import status41 from "http-status";
+import status43 from "http-status";
 var verifyEmailController = catchAsync(
   async (req, res) => {
     const { email, otp } = req.body;
     await verifyEmailService(email, otp);
     sendResponse(res, {
-      httpStatusCode: status41.OK,
+      httpStatusCode: status43.OK,
       success: true,
       message: "Email verified successfully"
     });
@@ -3355,13 +3427,13 @@ var verifyEmailController = catchAsync(
 );
 
 // src/app/module/auth/controllers/auth.forget-password.controller.ts
-import status42 from "http-status";
+import status44 from "http-status";
 var forgetPasswordController = catchAsync(
   async (req, res) => {
     const { email } = req.body;
     await forgetPasswordService(email);
     sendResponse(res, {
-      httpStatusCode: status42.OK,
+      httpStatusCode: status44.OK,
       success: true,
       message: "Password reset OTP sent to your email successfully"
     });
@@ -3369,13 +3441,13 @@ var forgetPasswordController = catchAsync(
 );
 
 // src/app/module/auth/controllers/auth.reset-password.controller.ts
-import status43 from "http-status";
+import status45 from "http-status";
 var resetPasswordController = catchAsync(
   async (req, res) => {
     const { email, otp, newPassword } = req.body;
     await resetPasswordService(email, otp, newPassword);
     sendResponse(res, {
-      httpStatusCode: status43.OK,
+      httpStatusCode: status45.OK,
       success: true,
       message: "Password reset successfully"
     });
@@ -3439,13 +3511,13 @@ var handleOAuthErrorController = catchAsync(
 );
 
 // src/app/module/auth/controllers/auth.resend-otp.controller.ts
-import status44 from "http-status";
+import status46 from "http-status";
 var resendOtpController = catchAsync(
   async (req, res) => {
     const { email } = req.body;
     await resendOtpService(email);
     sendResponse(res, {
-      httpStatusCode: status44.OK,
+      httpStatusCode: status46.OK,
       success: true,
       message: "OTP sent successfully"
     });
@@ -3500,7 +3572,7 @@ var AuthRoutes = router2;
 import { Router as Router3 } from "express";
 
 // src/app/module/user/controllers/getUsers.controller.ts
-import status49 from "http-status";
+import status51 from "http-status";
 
 // src/app/module/user/services/getUsers.service.ts
 var getUsersService = async (search, page = 1, limit = 10) => {
@@ -3551,7 +3623,7 @@ var getUsersService = async (search, page = 1, limit = 10) => {
 };
 
 // src/app/module/user/services/getUserById.service.ts
-import status45 from "http-status";
+import status47 from "http-status";
 var getUserByIdService = async (id) => {
   const user = await prisma.user.findUnique({
     where: { id },
@@ -3568,19 +3640,19 @@ var getUserByIdService = async (id) => {
     }
   });
   if (!user) {
-    throw new AppError_default(status45.NOT_FOUND, "User not found");
+    throw new AppError_default(status47.NOT_FOUND, "User not found");
   }
   return user;
 };
 
 // src/app/module/user/services/updateUserRole.service.ts
-import status46 from "http-status";
+import status48 from "http-status";
 var updateUserRoleService = async (id, payload) => {
   const user = await prisma.user.findUnique({
     where: { id }
   });
   if (!user) {
-    throw new AppError_default(status46.NOT_FOUND, "User not found");
+    throw new AppError_default(status48.NOT_FOUND, "User not found");
   }
   const updatedUser = await prisma.user.update({
     where: { id },
@@ -3601,16 +3673,16 @@ var updateUserRoleService = async (id, payload) => {
 };
 
 // src/app/module/user/services/updateUserStatus.service.ts
-import status47 from "http-status";
+import status49 from "http-status";
 var updateUserStatusService = async (id, payload, currentUserId) => {
   const user = await prisma.user.findUnique({
     where: { id }
   });
   if (!user) {
-    throw new AppError_default(status47.NOT_FOUND, "User not found");
+    throw new AppError_default(status49.NOT_FOUND, "User not found");
   }
   if (id === currentUserId && payload.status !== UserStatus.DELETED) {
-    throw new AppError_default(status47.FORBIDDEN, "You cannot change your own status");
+    throw new AppError_default(status49.FORBIDDEN, "You cannot change your own status");
   }
   const updatedUser = await prisma.user.update({
     where: { id },
@@ -3631,13 +3703,13 @@ var updateUserStatusService = async (id, payload, currentUserId) => {
 };
 
 // src/app/module/user/services/updateMyProfile.service.ts
-import status48 from "http-status";
+import status50 from "http-status";
 var updateMyProfileService = async (userId, payload) => {
   const user = await prisma.user.findUnique({
     where: { id: userId }
   });
   if (!user) {
-    throw new AppError_default(status48.NOT_FOUND, "User not found");
+    throw new AppError_default(status50.NOT_FOUND, "User not found");
   }
   const updatedUser = await prisma.user.update({
     where: { id: userId },
@@ -3825,7 +3897,7 @@ var getUsersController = catchAsync(
     const { page: pageNum, limit: limitNum } = getPaginationParams(page, limit);
     const result = await getUsersService(search, pageNum, limitNum);
     sendResponse(res, {
-      httpStatusCode: status49.OK,
+      httpStatusCode: status51.OK,
       success: true,
       message: "Users fetched successfully",
       data: result.data,
@@ -3835,13 +3907,13 @@ var getUsersController = catchAsync(
 );
 
 // src/app/module/user/controllers/getUserById.controller.ts
-import status50 from "http-status";
+import status52 from "http-status";
 var getUserByIdController = catchAsync(
   async (req, res) => {
     const { id } = req.params;
     const result = await getUserByIdService(id);
     sendResponse(res, {
-      httpStatusCode: status50.OK,
+      httpStatusCode: status52.OK,
       success: true,
       message: "User fetched successfully",
       data: result
@@ -3850,14 +3922,14 @@ var getUserByIdController = catchAsync(
 );
 
 // src/app/module/user/controllers/updateUserRole.controller.ts
-import status51 from "http-status";
+import status53 from "http-status";
 var updateUserRoleController = catchAsync(
   async (req, res) => {
     const { id } = req.params;
     const payload = req.body;
     const result = await updateUserRoleService(id, payload);
     sendResponse(res, {
-      httpStatusCode: status51.OK,
+      httpStatusCode: status53.OK,
       success: true,
       message: "User role updated successfully",
       data: result
@@ -3866,7 +3938,7 @@ var updateUserRoleController = catchAsync(
 );
 
 // src/app/module/user/controllers/updateUserStatus.controller.ts
-import status52 from "http-status";
+import status54 from "http-status";
 var updateUserStatusController = catchAsync(
   async (req, res) => {
     const { id } = req.params;
@@ -3877,7 +3949,7 @@ var updateUserStatusController = catchAsync(
     }
     const result = await updateUserStatusService(id, payload, user.userId);
     sendResponse(res, {
-      httpStatusCode: status52.OK,
+      httpStatusCode: status54.OK,
       success: true,
       message: "User status updated successfully",
       data: result
@@ -3886,7 +3958,7 @@ var updateUserStatusController = catchAsync(
 );
 
 // src/app/module/user/controllers/updateMyProfile.controller.ts
-import status53 from "http-status";
+import status55 from "http-status";
 var updateMyProfileController = catchAsync(
   async (req, res) => {
     const user = req.user;
@@ -3896,7 +3968,7 @@ var updateMyProfileController = catchAsync(
     }
     const result = await updateMyProfileService(user.userId, payload);
     sendResponse(res, {
-      httpStatusCode: status53.OK,
+      httpStatusCode: status55.OK,
       success: true,
       message: "Profile updated successfully",
       data: result
@@ -3905,11 +3977,11 @@ var updateMyProfileController = catchAsync(
 );
 
 // src/app/module/user/controllers/userDashboard.controller.ts
-import status54 from "http-status";
+import status56 from "http-status";
 var getUserDashboardController = catchAsync(async (req, res) => {
   const dashboardData = await getUserDashboardService(req.user.userId);
   sendResponse(res, {
-    httpStatusCode: status54.OK,
+    httpStatusCode: status56.OK,
     success: true,
     message: "User dashboard fetched successfully",
     data: dashboardData
@@ -3972,7 +4044,7 @@ var UserRoutes = router3;
 import { Router as Router4 } from "express";
 
 // src/app/module/address/controllers/getAddresses.controller.ts
-import status58 from "http-status";
+import status60 from "http-status";
 
 // src/app/module/address/services/getAddresses.service.ts
 var getAddressesService = async (userId, page = 1, limit = 10) => {
@@ -4014,16 +4086,16 @@ var createAddressService = async (userId, payload) => {
 };
 
 // src/app/module/address/services/updateAddress.service.ts
-import status55 from "http-status";
+import status57 from "http-status";
 var updateAddressService = async (id, userId, payload) => {
   const address = await prisma.userAddress.findUnique({
     where: { id }
   });
   if (!address) {
-    throw new AppError_default(status55.NOT_FOUND, "Address not found");
+    throw new AppError_default(status57.NOT_FOUND, "Address not found");
   }
   if (address.userId !== userId) {
-    throw new AppError_default(status55.FORBIDDEN, "You can only update your own addresses");
+    throw new AppError_default(status57.FORBIDDEN, "You can only update your own addresses");
   }
   if (payload.isDefault) {
     await prisma.userAddress.updateMany({
@@ -4039,16 +4111,16 @@ var updateAddressService = async (id, userId, payload) => {
 };
 
 // src/app/module/address/services/deleteAddress.service.ts
-import status56 from "http-status";
+import status58 from "http-status";
 var deleteAddressService = async (id, userId) => {
   const address = await prisma.userAddress.findUnique({
     where: { id }
   });
   if (!address) {
-    throw new AppError_default(status56.NOT_FOUND, "Address not found");
+    throw new AppError_default(status58.NOT_FOUND, "Address not found");
   }
   if (address.userId !== userId) {
-    throw new AppError_default(status56.FORBIDDEN, "You can only delete your own addresses");
+    throw new AppError_default(status58.FORBIDDEN, "You can only delete your own addresses");
   }
   await prisma.userAddress.delete({
     where: { id }
@@ -4057,16 +4129,16 @@ var deleteAddressService = async (id, userId) => {
 };
 
 // src/app/module/address/services/setDefaultAddress.service.ts
-import status57 from "http-status";
+import status59 from "http-status";
 var setDefaultAddressService = async (id, userId) => {
   const address = await prisma.userAddress.findUnique({
     where: { id }
   });
   if (!address) {
-    throw new AppError_default(status57.NOT_FOUND, "Address not found");
+    throw new AppError_default(status59.NOT_FOUND, "Address not found");
   }
   if (address.userId !== userId) {
-    throw new AppError_default(status57.FORBIDDEN, "You can only set your own addresses as default");
+    throw new AppError_default(status59.FORBIDDEN, "You can only set your own addresses as default");
   }
   await prisma.userAddress.updateMany({
     where: { userId },
@@ -4090,7 +4162,7 @@ var getAddressesController = catchAsync(
     const { page: pageNum, limit: limitNum } = getPaginationParams(page, limit);
     const result = await getAddressesService(user.userId, pageNum, limitNum);
     sendResponse(res, {
-      httpStatusCode: status58.OK,
+      httpStatusCode: status60.OK,
       success: true,
       message: "Addresses fetched successfully",
       data: result.data,
@@ -4100,7 +4172,7 @@ var getAddressesController = catchAsync(
 );
 
 // src/app/module/address/controllers/createAddress.controller.ts
-import status59 from "http-status";
+import status61 from "http-status";
 var createAddressController = catchAsync(
   async (req, res) => {
     const user = req.user;
@@ -4110,7 +4182,7 @@ var createAddressController = catchAsync(
     }
     const result = await createAddressService(user.userId, payload);
     sendResponse(res, {
-      httpStatusCode: status59.CREATED,
+      httpStatusCode: status61.CREATED,
       success: true,
       message: "Address created successfully",
       data: result
@@ -4119,7 +4191,7 @@ var createAddressController = catchAsync(
 );
 
 // src/app/module/address/controllers/updateAddress.controller.ts
-import status60 from "http-status";
+import status62 from "http-status";
 var updateAddressController = catchAsync(
   async (req, res) => {
     const { id } = req.params;
@@ -4130,7 +4202,7 @@ var updateAddressController = catchAsync(
     }
     const result = await updateAddressService(id, user.userId, payload);
     sendResponse(res, {
-      httpStatusCode: status60.OK,
+      httpStatusCode: status62.OK,
       success: true,
       message: "Address updated successfully",
       data: result
@@ -4139,7 +4211,7 @@ var updateAddressController = catchAsync(
 );
 
 // src/app/module/address/controllers/deleteAddress.controller.ts
-import status61 from "http-status";
+import status63 from "http-status";
 var deleteAddressController = catchAsync(
   async (req, res) => {
     const { id } = req.params;
@@ -4149,7 +4221,7 @@ var deleteAddressController = catchAsync(
     }
     const result = await deleteAddressService(id, user.userId);
     sendResponse(res, {
-      httpStatusCode: status61.OK,
+      httpStatusCode: status63.OK,
       success: true,
       message: "Address deleted successfully",
       data: result
@@ -4158,7 +4230,7 @@ var deleteAddressController = catchAsync(
 );
 
 // src/app/module/address/controllers/setDefaultAddress.controller.ts
-import status62 from "http-status";
+import status64 from "http-status";
 var setDefaultAddressController = catchAsync(
   async (req, res) => {
     const { id } = req.params;
@@ -4168,7 +4240,7 @@ var setDefaultAddressController = catchAsync(
     }
     const result = await setDefaultAddressService(id, user.userId);
     sendResponse(res, {
-      httpStatusCode: status62.OK,
+      httpStatusCode: status64.OK,
       success: true,
       message: "Default address set successfully",
       data: result
@@ -4230,10 +4302,10 @@ var AddressRoutes = router4;
 import { Router as Router5 } from "express";
 
 // src/app/module/rider/controllers/getRiderMe.controller.ts
-import status66 from "http-status";
+import status68 from "http-status";
 
 // src/app/module/rider/services/getRiderMe.service.ts
-import status63 from "http-status";
+import status65 from "http-status";
 var getRiderMeService = async (userId) => {
   const rider = await prisma.rider.findUnique({
     where: { userId },
@@ -4250,13 +4322,13 @@ var getRiderMeService = async (userId) => {
     }
   });
   if (!rider) {
-    throw new AppError_default(status63.NOT_FOUND, "Rider profile not found");
+    throw new AppError_default(status65.NOT_FOUND, "Rider profile not found");
   }
   return rider;
 };
 
 // src/app/module/rider/services/riderApply.service.ts
-import status64 from "http-status";
+import status66 from "http-status";
 var riderApplyService = async (userId, payload) => {
   if (userId) {
     const riderProfile = await prisma.rider.create({
@@ -4286,7 +4358,7 @@ var riderApplyService = async (userId, payload) => {
       }
     });
     if (!authData.user) {
-      throw new AppError_default(status64.BAD_REQUEST, "Failed to register user");
+      throw new AppError_default(status66.BAD_REQUEST, "Failed to register user");
     }
     createdUserId = authData.user.id;
     const riderProfile = await prisma.rider.create({
@@ -4446,16 +4518,16 @@ var getEarningsHistoryService = async (userId, query) => {
 };
 
 // src/app/module/rider/services/updateRiderStatus.service.ts
-import status65 from "http-status";
+import status67 from "http-status";
 var updateRiderStatusService = async (userId, payload) => {
   const rider = await prisma.rider.findUnique({
     where: { userId }
   });
   if (!rider) {
-    throw new AppError_default(status65.NOT_FOUND, "Rider profile not found");
+    throw new AppError_default(status67.NOT_FOUND, "Rider profile not found");
   }
   if (rider.accountStatus !== RiderAccountStatus.ACTIVE) {
-    throw new AppError_default(status65.FORBIDDEN, "Only active riders can update their status");
+    throw new AppError_default(status67.FORBIDDEN, "Only active riders can update their status");
   }
   const updatedRider = await prisma.rider.update({
     where: { userId },
@@ -4594,7 +4666,7 @@ var getAllCashoutsService = async (query) => {
     }
   };
 };
-var updateCashoutStatusService = async (cashoutId, status83) => {
+var updateCashoutStatusService = async (cashoutId, status85) => {
   const cashout = await prisma.cashout.findUnique({
     where: { id: cashoutId }
   });
@@ -4611,28 +4683,28 @@ var updateCashoutStatusService = async (cashoutId, status83) => {
     // No further transitions allowed
   };
   const allowedTransitions = validTransitions[cashout.status];
-  if (!allowedTransitions || !allowedTransitions.includes(status83)) {
-    throw new Error(`Invalid status transition from ${cashout.status} to ${status83}`);
+  if (!allowedTransitions || !allowedTransitions.includes(status85)) {
+    throw new Error(`Invalid status transition from ${cashout.status} to ${status85}`);
   }
   const updatedCashout = await prisma.cashout.update({
     where: { id: cashoutId },
     data: {
-      status: status83,
+      status: status85,
       processedAt: /* @__PURE__ */ new Date()
     }
   });
-  if (status83 === CashoutStatus.PAID) {
+  if (status85 === CashoutStatus.PAID) {
     await updateStatsCache({
       riderPayouts: { increment: updatedCashout.amount },
       pendingPayouts: { decrement: updatedCashout.amount }
     });
-  } else if (status83 === CashoutStatus.APPROVED) {
-  } else if (status83 === CashoutStatus.REJECTED) {
+  } else if (status85 === CashoutStatus.APPROVED) {
+  } else if (status85 === CashoutStatus.REJECTED) {
     await updateStatsCache({
       pendingPayouts: { decrement: updatedCashout.amount }
     });
   }
-  if (status83 === CashoutStatus.APPROVED) {
+  if (status85 === CashoutStatus.APPROVED) {
     const totalAmount = updatedCashout.amount;
     const pendingEarnings = await prisma.earning.findMany({
       where: {
@@ -4822,7 +4894,7 @@ var getRiderMeController = catchAsync(
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status66.UNAUTHORIZED,
+        httpStatusCode: status68.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -4830,7 +4902,7 @@ var getRiderMeController = catchAsync(
     }
     const rider = await getRiderMeService(userId);
     sendResponse(res, {
-      httpStatusCode: status66.OK,
+      httpStatusCode: status68.OK,
       success: true,
       message: "Rider profile fetched successfully",
       data: rider
@@ -4839,7 +4911,7 @@ var getRiderMeController = catchAsync(
 );
 
 // src/app/module/rider/controllers/riderApply.controller.ts
-import status67 from "http-status";
+import status69 from "http-status";
 
 // src/app/module/rider/validations/rider.validation.ts
 import { z as z4 } from "zod";
@@ -4883,7 +4955,7 @@ var riderApplyController = catchAsync(
     if (user) {
       if (user.role !== UserRole.CUSTOMER) {
         sendResponse(res, {
-          httpStatusCode: status67.FORBIDDEN,
+          httpStatusCode: status69.FORBIDDEN,
           success: false,
           message: "Only customers can apply for rider role"
         });
@@ -4895,7 +4967,7 @@ var riderApplyController = catchAsync(
       });
       if (!dbUser) {
         sendResponse(res, {
-          httpStatusCode: status67.NOT_FOUND,
+          httpStatusCode: status69.NOT_FOUND,
           success: false,
           message: "User not found"
         });
@@ -4903,7 +4975,7 @@ var riderApplyController = catchAsync(
       }
       if (dbUser.riderProfile) {
         sendResponse(res, {
-          httpStatusCode: status67.CONFLICT,
+          httpStatusCode: status69.CONFLICT,
           success: false,
           message: "You already have a rider profile"
         });
@@ -4917,7 +4989,7 @@ var riderApplyController = catchAsync(
       };
       const result = await riderApplyService(userId, authenticatedPayload);
       sendResponse(res, {
-        httpStatusCode: status67.CREATED,
+        httpStatusCode: status69.CREATED,
         success: true,
         message: "Rider application submitted successfully. Your profile is under review.",
         data: result
@@ -4932,7 +5004,7 @@ var riderApplyController = catchAsync(
       };
       const result = await riderApplyService(void 0, unauthenticatedPayload);
       sendResponse(res, {
-        httpStatusCode: status67.CREATED,
+        httpStatusCode: status69.CREATED,
         success: true,
         message: "User profile created and rider application submitted successfully. Please check your email to verify your account.",
         data: result
@@ -4942,13 +5014,13 @@ var riderApplyController = catchAsync(
 );
 
 // src/app/module/rider/controllers/riderEarnings.controller.ts
-import status68 from "http-status";
+import status70 from "http-status";
 var getCurrentEarningsController = catchAsync(
   async (req, res) => {
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status68.UNAUTHORIZED,
+        httpStatusCode: status70.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -4956,7 +5028,7 @@ var getCurrentEarningsController = catchAsync(
     }
     const result = await getCurrentEarningsService(userId);
     sendResponse(res, {
-      httpStatusCode: status68.OK,
+      httpStatusCode: status70.OK,
       success: true,
       message: "Current earnings fetched successfully",
       data: result
@@ -4968,7 +5040,7 @@ var getEarningsHistoryController = catchAsync(
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status68.UNAUTHORIZED,
+        httpStatusCode: status70.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -4976,7 +5048,7 @@ var getEarningsHistoryController = catchAsync(
     }
     const result = await getEarningsHistoryService(userId, req.query);
     sendResponse(res, {
-      httpStatusCode: status68.OK,
+      httpStatusCode: status70.OK,
       success: true,
       message: "Earnings history fetched successfully",
       data: result.earnings,
@@ -4986,13 +5058,13 @@ var getEarningsHistoryController = catchAsync(
 );
 
 // src/app/module/rider/controllers/updateRiderStatus.controller.ts
-import status69 from "http-status";
+import status71 from "http-status";
 var updateRiderStatusController = catchAsync(
   async (req, res) => {
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status69.UNAUTHORIZED,
+        httpStatusCode: status71.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -5004,7 +5076,7 @@ var updateRiderStatusController = catchAsync(
     };
     const rider = await updateRiderStatusService(userId, payload);
     sendResponse(res, {
-      httpStatusCode: status69.OK,
+      httpStatusCode: status71.OK,
       success: true,
       message: "Rider status updated successfully",
       data: rider
@@ -5013,13 +5085,13 @@ var updateRiderStatusController = catchAsync(
 );
 
 // src/app/module/rider/controllers/cashout.controller.ts
-import status70 from "http-status";
+import status72 from "http-status";
 var requestCashoutController = catchAsync(
   async (req, res) => {
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status70.UNAUTHORIZED,
+        httpStatusCode: status72.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -5028,7 +5100,7 @@ var requestCashoutController = catchAsync(
     const { amount } = req.body;
     const result = await requestCashoutService(userId, amount);
     sendResponse(res, {
-      httpStatusCode: status70.CREATED,
+      httpStatusCode: status72.CREATED,
       success: true,
       message: "Cashout request submitted successfully",
       data: result
@@ -5040,7 +5112,7 @@ var getMyCashoutsController = catchAsync(
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status70.UNAUTHORIZED,
+        httpStatusCode: status72.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -5048,7 +5120,7 @@ var getMyCashoutsController = catchAsync(
     }
     const result = await getMyCashoutsService(userId, req.query);
     sendResponse(res, {
-      httpStatusCode: status70.OK,
+      httpStatusCode: status72.OK,
       success: true,
       message: "Cashouts fetched successfully",
       data: result.cashouts,
@@ -5060,7 +5132,7 @@ var getAllCashoutsController = catchAsync(
   async (req, res) => {
     const result = await getAllCashoutsService(req.query);
     sendResponse(res, {
-      httpStatusCode: status70.OK,
+      httpStatusCode: status72.OK,
       success: true,
       message: "All cashouts fetched successfully",
       data: result.cashouts,
@@ -5074,7 +5146,7 @@ var updateCashoutStatusController = catchAsync(
     const { status: cashoutStatus } = req.body;
     const result = await updateCashoutStatusService(id, cashoutStatus);
     sendResponse(res, {
-      httpStatusCode: status70.OK,
+      httpStatusCode: status72.OK,
       success: true,
       message: `Cashout ${cashoutStatus.toLowerCase()} successfully`,
       data: result
@@ -5083,11 +5155,11 @@ var updateCashoutStatusController = catchAsync(
 );
 
 // src/app/module/rider/controllers/riderDashboard.controller.ts
-import status71 from "http-status";
+import status73 from "http-status";
 var getRiderDashboardController = catchAsync(async (req, res) => {
   const dashboardData = await getRiderDashboardService(req.user.userId);
   sendResponse(res, {
-    httpStatusCode: status71.OK,
+    httpStatusCode: status73.OK,
     success: true,
     message: "Rider dashboard fetched successfully",
     data: dashboardData
@@ -5095,7 +5167,7 @@ var getRiderDashboardController = catchAsync(async (req, res) => {
 });
 
 // src/app/middleware/optionalAuth.ts
-import status72 from "http-status";
+import status74 from "http-status";
 var optionalAuth = (...authRoles) => {
   return async (req, res, next) => {
     try {
@@ -5127,10 +5199,10 @@ var optionalAuth = (...authRoles) => {
             res.setHeader("X-Time-Left", timeLeft.toString());
           }
           if (user.status === UserStatus.BLOCKED || user.status === UserStatus.DELETED) {
-            throw new AppError_default(status72.FORBIDDEN, `Your account has been ${user.status === UserStatus.BLOCKED ? "blocked" : "deleted"}. Please contact support.`);
+            throw new AppError_default(status74.FORBIDDEN, `Your account has been ${user.status === UserStatus.BLOCKED ? "blocked" : "deleted"}. Please contact support.`);
           }
           if (authRoles.length > 0 && !authRoles.includes(user.role)) {
-            throw new AppError_default(status72.FORBIDDEN, "You are not authorized to access this resource");
+            throw new AppError_default(status74.FORBIDDEN, "You are not authorized to access this resource");
           }
           req.user = {
             userId: user.id,
@@ -5144,7 +5216,7 @@ var optionalAuth = (...authRoles) => {
         const verifiedToken = jwtUtils.verifyToken(accessToken, envVars.ACCESS_TOKEN_SECRET);
         if (verifiedToken.success) {
           if (authRoles.length > 0 && !authRoles.includes(verifiedToken.data.role)) {
-            throw new AppError_default(status72.FORBIDDEN, "Forbidden access! you do not have permission to access this route");
+            throw new AppError_default(status74.FORBIDDEN, "Forbidden access! you do not have permission to access this route");
           }
           if (!req.user) {
             req.user = {
@@ -5232,7 +5304,7 @@ var paymentInitiateSchema = z6.object({
 });
 
 // src/app/module/payment/controllers/payment.initiate.controller.ts
-import status73 from "http-status";
+import status75 from "http-status";
 var initiatePaymentController = catchAsync(
   async (req, res) => {
     const userId = req.user.userId;
@@ -5243,7 +5315,7 @@ var initiatePaymentController = catchAsync(
       userId
     );
     sendResponse(res, {
-      httpStatusCode: status73.OK,
+      httpStatusCode: status75.OK,
       success: true,
       message: "Payment initiated successfully",
       data: result
@@ -5252,7 +5324,7 @@ var initiatePaymentController = catchAsync(
 );
 
 // src/app/module/payment/controllers/payment.webhook.controller.ts
-import status74 from "http-status";
+import status76 from "http-status";
 var webhookController = catchAsync(
   async (req, res) => {
     const sig = req.headers["stripe-signature"];
@@ -5261,14 +5333,14 @@ var webhookController = catchAsync(
       const event = await stripe_service_default.verifyWebhookSignature(payload, sig);
       await payment_service_default.handleStripeWebhook(event);
       sendResponse(res, {
-        httpStatusCode: status74.OK,
+        httpStatusCode: status76.OK,
         success: true,
         message: "Webhook processed successfully",
         data: null
       });
     } catch (error) {
       console.error("Webhook error:", error);
-      return res.status(status74.BAD_REQUEST).json({
+      return res.status(status76.BAD_REQUEST).json({
         success: false,
         message: error instanceof Error ? error.message : "Unknown error"
       });
@@ -5277,7 +5349,7 @@ var webhookController = catchAsync(
 );
 
 // src/app/module/payment/controllers/payment.sslcommerz.controller.ts
-import status75 from "http-status";
+import status77 from "http-status";
 var sslcommerzIPNController = catchAsync(
   async (req, res) => {
     const ipnData = req.body;
@@ -5285,7 +5357,7 @@ var sslcommerzIPNController = catchAsync(
       const isValid = sslcommerz_service_default.verifyIPN(ipnData);
       if (!isValid) {
         console.error("SSL Commerz IPN signature verification failed");
-        return res.status(status75.BAD_REQUEST).json({
+        return res.status(status77.BAD_REQUEST).json({
           success: false,
           message: "Invalid IPN signature"
         });
@@ -5294,7 +5366,7 @@ var sslcommerzIPNController = catchAsync(
       const amount = sslcommerz_service_default.extractAmount(ipnData);
       if (!sslcommerz_service_default.isPaymentSuccessful(ipnData)) {
         console.log(`SSL Commerz payment failed: ${ipnData.status}`);
-        return res.status(status75.OK).json({
+        return res.status(status77.OK).json({
           success: true,
           message: "IPN received (payment not successful)"
         });
@@ -5302,14 +5374,14 @@ var sslcommerzIPNController = catchAsync(
       const paymentType = metadata.type || "default";
       await payment_service_default.handleWebhookCallback(paymentType, metadata, amount);
       sendResponse(res, {
-        httpStatusCode: status75.OK,
+        httpStatusCode: status77.OK,
         success: true,
         message: "SSL Commerz IPN processed successfully",
         data: null
       });
     } catch (error) {
       console.error("SSL Commerz IPN error:", error);
-      return res.status(status75.INTERNAL_SERVER_ERROR).json({
+      return res.status(status77.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: error instanceof Error ? error.message : "Error processing SSL Commerz IPN"
       });
@@ -5376,7 +5448,7 @@ var PaymentRoutes = router6;
 import { Router as Router7 } from "express";
 
 // src/app/module/analytics/controllers/revenue.controller.ts
-import status76 from "http-status";
+import status78 from "http-status";
 
 // src/app/module/analytics/services/revenue.service.ts
 var getRevenueAnalyticsService = async (query) => {
@@ -5498,7 +5570,7 @@ var getRevenueAnalyticsController = catchAsync(
   async (req, res) => {
     const result = await getRevenueAnalyticsService(req.query);
     sendResponse(res, {
-      httpStatusCode: status76.OK,
+      httpStatusCode: status78.OK,
       success: true,
       message: "Revenue analytics fetched successfully",
       data: result
@@ -5507,7 +5579,7 @@ var getRevenueAnalyticsController = catchAsync(
 );
 
 // src/app/module/analytics/controllers/dashboard.controller.ts
-import status77 from "http-status";
+import status79 from "http-status";
 
 // src/app/module/analytics/services/dashboard.service.ts
 var getDashboardMetricsService = async () => {
@@ -5555,7 +5627,7 @@ var getDashboardMetricsController = catchAsync(
   async (req, res) => {
     const result = await getDashboardMetricsService();
     sendResponse(res, {
-      httpStatusCode: status77.OK,
+      httpStatusCode: status79.OK,
       success: true,
       message: "Dashboard metrics fetched successfully",
       data: result
@@ -5581,26 +5653,26 @@ var AnalyticsRoutes = router7;
 import { Router as Router8 } from "express";
 
 // src/app/module/rating/controllers/rating.controller.ts
-import status79 from "http-status";
+import status81 from "http-status";
 
 // src/app/module/rating/services/rating.service.ts
-import status78 from "http-status";
+import status80 from "http-status";
 var submitRatingService = async (customerId, data) => {
   const parcel = await prisma.parcel.findUnique({
     where: { id: data.parcelId },
     include: { rider: true }
   });
   if (!parcel) {
-    throw new AppError_default(status78.NOT_FOUND, "Parcel not found");
+    throw new AppError_default(status80.NOT_FOUND, "Parcel not found");
   }
   if (parcel.customerId !== customerId) {
-    throw new AppError_default(status78.FORBIDDEN, "You can only rate your own parcels");
+    throw new AppError_default(status80.FORBIDDEN, "You can only rate your own parcels");
   }
   if (parcel.status !== ParcelStatus.DELIVERED) {
-    throw new AppError_default(status78.BAD_REQUEST, "You can only rate delivered parcels");
+    throw new AppError_default(status80.BAD_REQUEST, "You can only rate delivered parcels");
   }
   if (!parcel.riderId) {
-    throw new AppError_default(status78.BAD_REQUEST, "No rider assigned to this parcel");
+    throw new AppError_default(status80.BAD_REQUEST, "No rider assigned to this parcel");
   }
   const existingRating = await prisma.riderRating.findUnique({
     where: {
@@ -5611,7 +5683,7 @@ var submitRatingService = async (customerId, data) => {
     }
   });
   if (existingRating) {
-    throw new AppError_default(status78.CONFLICT, "You have already rated this parcel");
+    throw new AppError_default(status80.CONFLICT, "You have already rated this parcel");
   }
   const rating = await prisma.riderRating.create({
     data: {
@@ -5673,7 +5745,7 @@ var getRatingSummaryService = async (riderId) => {
     where: { id: riderId }
   });
   if (!rider) {
-    throw new AppError_default(status78.NOT_FOUND, "Rider not found");
+    throw new AppError_default(status80.NOT_FOUND, "Rider not found");
   }
   const ratings = await prisma.riderRating.findMany({
     where: { riderId },
@@ -5698,14 +5770,14 @@ var updateRatingService = async (ratingId, customerId, data) => {
     include: { rider: true }
   });
   if (!rating) {
-    throw new AppError_default(status78.NOT_FOUND, "Rating not found");
+    throw new AppError_default(status80.NOT_FOUND, "Rating not found");
   }
   if (rating.customerId !== customerId) {
-    throw new AppError_default(status78.FORBIDDEN, "You can only update your own ratings");
+    throw new AppError_default(status80.FORBIDDEN, "You can only update your own ratings");
   }
   const hoursSinceCreation = (Date.now() - rating.createdAt.getTime()) / (1e3 * 60 * 60);
   if (hoursSinceCreation > 24) {
-    throw new AppError_default(status78.BAD_REQUEST, "You can only edit ratings within 24 hours");
+    throw new AppError_default(status80.BAD_REQUEST, "You can only edit ratings within 24 hours");
   }
   const oldRatingValue = rating.rating;
   const updatedRating = await prisma.riderRating.update({
@@ -5740,14 +5812,14 @@ var deleteRatingService = async (ratingId, customerId) => {
     include: { rider: true }
   });
   if (!rating) {
-    throw new AppError_default(status78.NOT_FOUND, "Rating not found");
+    throw new AppError_default(status80.NOT_FOUND, "Rating not found");
   }
   if (rating.customerId !== customerId) {
-    throw new AppError_default(status78.FORBIDDEN, "You can only delete your own ratings");
+    throw new AppError_default(status80.FORBIDDEN, "You can only delete your own ratings");
   }
   const hoursSinceCreation = (Date.now() - rating.createdAt.getTime()) / (1e3 * 60 * 60);
   if (hoursSinceCreation > 24) {
-    throw new AppError_default(status78.BAD_REQUEST, "You can only delete ratings within 24 hours");
+    throw new AppError_default(status80.BAD_REQUEST, "You can only delete ratings within 24 hours");
   }
   await prisma.riderRating.delete({
     where: { id: ratingId }
@@ -5841,7 +5913,7 @@ var submitRatingController = catchAsync(async (req, res) => {
   const validatedData = submitRatingSchema.parse(req.body);
   const rating = await submitRatingService(req.user.userId, validatedData);
   sendResponse(res, {
-    httpStatusCode: status79.CREATED,
+    httpStatusCode: status81.CREATED,
     success: true,
     message: "Rating submitted successfully",
     data: rating
@@ -5854,7 +5926,7 @@ var getRiderRatingsController = catchAsync(async (req, res) => {
   const limit = parseInt(validatedData.limit);
   const result = await getRiderRatingsService(riderId, page, limit);
   sendResponse(res, {
-    httpStatusCode: status79.OK,
+    httpStatusCode: status81.OK,
     success: true,
     message: "Rider ratings fetched successfully",
     data: result.ratings,
@@ -5865,7 +5937,7 @@ var getRatingSummaryController = catchAsync(async (req, res) => {
   const { riderId } = req.params;
   const summary = await getRatingSummaryService(riderId);
   sendResponse(res, {
-    httpStatusCode: status79.OK,
+    httpStatusCode: status81.OK,
     success: true,
     message: "Rating summary fetched successfully",
     data: summary
@@ -5876,7 +5948,7 @@ var updateRatingController = catchAsync(async (req, res) => {
   const validatedData = updateRatingSchema.parse(req.body);
   const rating = await updateRatingService(id, req.user.userId, validatedData);
   sendResponse(res, {
-    httpStatusCode: status79.OK,
+    httpStatusCode: status81.OK,
     success: true,
     message: "Rating updated successfully",
     data: rating
@@ -5886,7 +5958,7 @@ var deleteRatingController = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await deleteRatingService(id, req.user.userId);
   sendResponse(res, {
-    httpStatusCode: status79.OK,
+    httpStatusCode: status81.OK,
     success: true,
     message: result.message,
     data: null
@@ -5896,7 +5968,7 @@ var getRecentReviewsController = catchAsync(async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const reviews = await getRecentReviewsService(limit);
   sendResponse(res, {
-    httpStatusCode: status79.OK,
+    httpStatusCode: status81.OK,
     success: true,
     message: "Recent reviews fetched successfully",
     data: reviews
@@ -5906,7 +5978,7 @@ var getMyRatingsController = catchAsync(async (req, res) => {
   const customerId = req.user.userId;
   const ratings = await getMyRatingsService(customerId);
   sendResponse(res, {
-    httpStatusCode: status79.OK,
+    httpStatusCode: status81.OK,
     success: true,
     message: "My ratings fetched successfully",
     data: ratings
@@ -5947,13 +6019,13 @@ router9.use("/ratings", RatingRoutes);
 var IndexRoutes = router9;
 
 // src/app/middleware/globalErrorHandler.ts
-import status82 from "http-status";
+import status84 from "http-status";
 import z8 from "zod";
 
 // src/app/errorHelper/handleZodError.ts
-import status80 from "http-status";
+import status82 from "http-status";
 var handleZodError = (error) => {
-  const statusCode = status80.BAD_REQUEST;
+  const statusCode = status82.BAD_REQUEST;
   const message = "Zod Validation Error";
   const errorSources = [];
   errorSources.push(...error.issues.map((issue) => ({
@@ -5969,42 +6041,42 @@ var handleZodError = (error) => {
 };
 
 // src/app/errorHelper/handlePrismaErrors.ts
-import status81 from "http-status";
+import status83 from "http-status";
 var getStatusCodeFromPrismaError = (errorCode) => {
   if (errorCode === "P2002") {
-    return status81.CONFLICT;
+    return status83.CONFLICT;
   }
   if (["P2025", "P2001", "P2015", "P2018"].includes(errorCode)) {
-    return status81.NOT_FOUND;
+    return status83.NOT_FOUND;
   }
   if (["P1000", "P6002"].includes(errorCode)) {
-    return status81.UNAUTHORIZED;
+    return status83.UNAUTHORIZED;
   }
   if (["P1010", "P6010"].includes(errorCode)) {
-    return status81.FORBIDDEN;
+    return status83.FORBIDDEN;
   }
   if (errorCode === "P6003") {
-    return status81.PAYMENT_REQUIRED;
+    return status83.PAYMENT_REQUIRED;
   }
   if (["P1008", "P2004", "P6004"].includes(errorCode)) {
-    return status81.GATEWAY_TIMEOUT;
+    return status83.GATEWAY_TIMEOUT;
   }
   if (errorCode === "P5011") {
-    return status81.TOO_MANY_REQUESTS;
+    return status83.TOO_MANY_REQUESTS;
   }
   if (errorCode === "P6009") {
     return 413;
   }
   if (errorCode.startsWith("P1") || ["P2024", "P2037", "P6008"].includes(errorCode)) {
-    return status81.SERVICE_UNAVAILABLE;
+    return status83.SERVICE_UNAVAILABLE;
   }
   if (errorCode.startsWith("P2")) {
-    return status81.BAD_REQUEST;
+    return status83.BAD_REQUEST;
   }
   if (errorCode.startsWith("P3") || errorCode.startsWith("P4")) {
-    return status81.INTERNAL_SERVER_ERROR;
+    return status83.INTERNAL_SERVER_ERROR;
   }
-  return status81.INTERNAL_SERVER_ERROR;
+  return status83.INTERNAL_SERVER_ERROR;
 };
 var formatErrorMeta = (meta) => {
   if (!meta) return "";
@@ -6074,7 +6146,7 @@ var handlePrismaClientUnknownError = (error) => {
   ];
   return {
     success: false,
-    statusCode: status81.INTERNAL_SERVER_ERROR,
+    statusCode: status83.INTERNAL_SERVER_ERROR,
     message: `Prisma Client Unknown Request Error: ${mainMessage}`,
     errorSources
   };
@@ -6095,13 +6167,13 @@ var handlePrismaClientValidationError = (error) => {
   });
   return {
     success: false,
-    statusCode: status81.BAD_REQUEST,
+    statusCode: status83.BAD_REQUEST,
     message: `Prisma Client Validation Error: ${mainMessage}`,
     errorSources
   };
 };
 var handlerPrismaClientInitializationError = (error) => {
-  const statusCode = error.errorCode ? getStatusCodeFromPrismaError(error.errorCode) : status81.SERVICE_UNAVAILABLE;
+  const statusCode = error.errorCode ? getStatusCodeFromPrismaError(error.errorCode) : status83.SERVICE_UNAVAILABLE;
   const cleanMessage = error.message;
   cleanMessage.replace(/Invalid `.*?` invocation:?\s*/i, "");
   const lines = cleanMessage.split("\n").filter((line) => line.trim());
@@ -6126,7 +6198,7 @@ var handlerPrismaClientRustPanicError = () => {
   }];
   return {
     success: false,
-    statusCode: status81.INTERNAL_SERVER_ERROR,
+    statusCode: status83.INTERNAL_SERVER_ERROR,
     message: "Prisma Client Rust Panic Error: The database engine crashed due to a fatal error.",
     errorSources
   };
@@ -6138,31 +6210,31 @@ var globalErrorHandler = async (error, req, res, next) => {
     console.error("Global Error Handler:", error);
   }
   let errorSources = [];
-  let statusCode = status82.INTERNAL_SERVER_ERROR;
+  let statusCode = status84.INTERNAL_SERVER_ERROR;
   let message = "Internal Server Error";
   if (error instanceof prismaNamespace_exports.PrismaClientKnownRequestError) {
     const simplifiedError = handlePrismaClientKnownRequestError(error);
-    statusCode = simplifiedError.statusCode || status82.CONFLICT;
+    statusCode = simplifiedError.statusCode || status84.CONFLICT;
     message = simplifiedError.message;
     errorSources = [...simplifiedError.errorSources];
   } else if (error instanceof prismaNamespace_exports.PrismaClientUnknownRequestError) {
     const simplifiedError = handlePrismaClientUnknownError(error);
-    statusCode = simplifiedError.statusCode || status82.INTERNAL_SERVER_ERROR;
+    statusCode = simplifiedError.statusCode || status84.INTERNAL_SERVER_ERROR;
     message = simplifiedError.message;
     errorSources = [...simplifiedError.errorSources];
   } else if (error instanceof prismaNamespace_exports.PrismaClientValidationError) {
     const simplifiedError = handlePrismaClientValidationError(error);
-    statusCode = simplifiedError.statusCode || status82.BAD_REQUEST;
+    statusCode = simplifiedError.statusCode || status84.BAD_REQUEST;
     message = simplifiedError.message;
     errorSources = [...simplifiedError.errorSources];
   } else if (error instanceof prismaNamespace_exports.PrismaClientRustPanicError) {
     const simplifiedError = handlerPrismaClientRustPanicError();
-    statusCode = simplifiedError.statusCode || status82.INTERNAL_SERVER_ERROR;
+    statusCode = simplifiedError.statusCode || status84.INTERNAL_SERVER_ERROR;
     message = simplifiedError.message;
     errorSources = [...simplifiedError.errorSources];
   } else if (error instanceof prismaNamespace_exports.PrismaClientInitializationError) {
     const simplifiedError = handlerPrismaClientInitializationError(error);
-    statusCode = simplifiedError.statusCode || status82.SERVICE_UNAVAILABLE;
+    statusCode = simplifiedError.statusCode || status84.SERVICE_UNAVAILABLE;
     message = simplifiedError.message;
     errorSources = [...simplifiedError.errorSources];
   } else if (error instanceof z8.ZodError) {
@@ -6174,7 +6246,7 @@ var globalErrorHandler = async (error, req, res, next) => {
     statusCode = error.statusCode;
     message = error.message;
   } else if (error instanceof Error) {
-    statusCode = status82.INTERNAL_SERVER_ERROR;
+    statusCode = status84.INTERNAL_SERVER_ERROR;
     message = error.message;
   }
   const errorResponse = {
