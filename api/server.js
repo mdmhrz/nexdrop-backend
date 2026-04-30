@@ -6295,7 +6295,9 @@ app.use(cors({
       envVars.BACKEND_URL,
       "http://localhost:3000",
       "http://localhost:5000",
-      "https://nex-drop-client.vercel.app"
+      "https://nex-drop-client.vercel.app",
+      "https://sandbox.sslcommerz.com",
+      "https://securepay.sslcommerz.com"
     ];
     if (!origin || origin === "null" || allowedOrigins.includes(origin)) {
       callback(null, true);
