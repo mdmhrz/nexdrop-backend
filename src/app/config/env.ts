@@ -32,6 +32,11 @@ interface EnvConfig {
         STORE_PASSWORD: string;
         IS_SANDBOX: boolean;
     };
+    SUPER_ADMIN: {
+        EMAIL: string;
+        PASSWORD: string;
+    };
+
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -62,7 +67,9 @@ const loadEnvVariables = (): EnvConfig => {
         "STRIPE_WEBHOOK_SECRET",
         "SSLCOMMERZ_STORE_ID",
         "SSLCOMMERZ_STORE_PASSWORD",
-        "SSLCOMMERZ_IS_SANDBOX"
+        "SSLCOMMERZ_IS_SANDBOX",
+        "SUPER_ADMIN_EMAIL",
+        "SUPER_ADMIN_PASSWORD"
     ];
 
     requiredEnvVars.forEach((varName) => {
@@ -102,6 +109,10 @@ const loadEnvVariables = (): EnvConfig => {
             STORE_PASSWORD: process.env.SSLCOMMERZ_STORE_PASSWORD as string,
             IS_SANDBOX: process.env.SSLCOMMERZ_IS_SANDBOX === 'true',
         },
+        SUPER_ADMIN: {
+            EMAIL: process.env.SUPER_ADMIN_EMAIL as string,
+            PASSWORD: process.env.SUPER_ADMIN_PASSWORD as string,
+        }
     }
 }
 

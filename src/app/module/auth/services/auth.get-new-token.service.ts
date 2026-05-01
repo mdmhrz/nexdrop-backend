@@ -10,9 +10,12 @@ import { tokenUtils } from "../../../utils/token";
 
 export const getNewTokenService = async (refreshToken: string, sessionToken: string) => {
 
+    // better-auth stores "tokenId.signature" in the cookie; only the tokenId is in the DB
+    const cleanSessionToken = sessionToken.split(".")[0];
+
     const isSessionExist = await prisma.session.findUnique({
         where: {
-            token: sessionToken
+            token: cleanSessionToken
         },
         include: {
             user: true
@@ -50,21 +53,21 @@ export const getNewTokenService = async (refreshToken: string, sessionToken: str
         emailVerified: data.emailVerified
     })
 
-    const { token } = await prisma.session.update({
+    // Only extend the session lifetime — do NOT change the session token value.
+    // Changing it to a JWT would break checkAuth which strips after the first "."
+    await prisma.session.update({
         where: {
-            token: sessionToken
+            token: cleanSessionToken
         },
         data: {
-            token: newRefreshToken,
             expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
             updatedAt: new Date()
         }
     })
 
-
-
     return {
-        sessionToken: token,
+        // Return the original session token (with .signature) unchanged so the browser cookie stays valid
+        sessionToken,
         accessToken: newAccessToken,
         refreshToken: newRefreshToken
     }
