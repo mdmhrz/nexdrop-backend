@@ -3505,6 +3505,7 @@ var googleLoginSuccessController = catchAsync(
     const params = new URLSearchParams({
       accessToken,
       refreshToken,
+      sessionToken,
       redirect: finalRedirectPath
     });
     res.redirect(`${envVars.FRONTEND_URL}/api/auth/set-cookies?${params.toString()}`);
