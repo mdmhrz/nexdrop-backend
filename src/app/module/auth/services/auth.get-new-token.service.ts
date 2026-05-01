@@ -56,7 +56,7 @@ export const getNewTokenService = async (refreshToken: string, sessionToken: str
         },
         data: {
             token: newRefreshToken,
-            expiresAt: new Date(Date.now() + 60 * 60 * 60 * 24 * 1000),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
             updatedAt: new Date()
         }
     })

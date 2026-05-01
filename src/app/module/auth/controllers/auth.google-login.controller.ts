@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { catchAsync } from "../../../shared/catchAsync";
 import { envVars } from "../../../config/env";
 import { auth } from "../../../lib/auth";
-import { tokenUtils } from "../../../utils/token";
+
 import { googleLoginService } from "../services";
 
 
@@ -87,15 +87,19 @@ export const googleLoginSuccessController = catchAsync(
 
         const { accessToken, refreshToken } = result;
 
-        console.log(accessToken, "access token", refreshToken, "refresh token");
-
-        tokenUtils.setAccessTokenCookie(res, accessToken);
-        tokenUtils.setRefreshTokenCookie(res, refreshToken);
-
         const isValidRedirectPath = redirectPath.startsWith("/") && !redirectPath.startsWith("//");
         const finalRedirectPath = isValidRedirectPath ? redirectPath : "/dashboard";
 
-        res.redirect(`${envVars.FRONTEND_URL}${finalRedirectPath}`);
+        // In production the backend and frontend are on different domains, so
+        // cookies set here would land on the backend domain and never reach the
+        // frontend. Instead, redirect to a Next.js API route that sets the cookies
+        // on the frontend domain, then forwards the user to their destination.
+        const params = new URLSearchParams({
+            accessToken,
+            refreshToken,
+            redirect: finalRedirectPath,
+        });
+        res.redirect(`${envVars.FRONTEND_URL}/api/auth/set-cookies?${params.toString()}`);
 
     }
 );

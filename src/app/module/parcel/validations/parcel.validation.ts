@@ -2,10 +2,10 @@ import { z } from "zod";
 import { ParcelStatus, PaymentMethod, ParcelType, ServiceType } from "../../../../generated/prisma/enums";
 
 const BANGLADESH_DISTRICTS = [
-    "Bagerhat", "Bandarban", "Barguna", "Barishal", "Bhola", "Bogura",
-    "Brahmanbaria", "Chandpur", "Chattogram", "Chuadanga", "Cox's Bazar",
-    "Cumilla", "Dhaka", "Dinajpur", "Faridpur", "Feni", "Gaibandha",
-    "Gazipur", "Gopalganj", "Habiganj", "Jamalpur", "Jashore", "Jhalokati",
+    "Bagerhat", "Bandarban", "Barguna", "Barisal", "Bhola", "Bogra",
+    "Brahmanbaria", "Chandpur", "Chapainawabganj", "Chattogram", "Chuadanga", "Cox's Bazar",
+    "Comilla", "Dhaka", "Dinajpur", "Faridpur", "Feni", "Gaibandha",
+    "Gazipur", "Gopalganj", "Habiganj", "Jamalpur", "Jessore", "Jhalokati",
     "Jhenaidah", "Joypurhat", "Khagrachari", "Khulna", "Kishoreganj",
     "Kurigram", "Kushtia", "Lakshmipur", "Lalmonirhat", "Madaripur", "Magura",
     "Manikganj", "Meherpur", "Moulvibazar", "Munshiganj", "Mymensingh",

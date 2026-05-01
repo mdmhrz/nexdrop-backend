@@ -1909,15 +1909,16 @@ var BANGLADESH_DISTRICTS = [
   "Bagerhat",
   "Bandarban",
   "Barguna",
-  "Barishal",
+  "Barisal",
   "Bhola",
-  "Bogura",
+  "Bogra",
   "Brahmanbaria",
   "Chandpur",
+  "Chapainawabganj",
   "Chattogram",
   "Chuadanga",
   "Cox's Bazar",
-  "Cumilla",
+  "Comilla",
   "Dhaka",
   "Dinajpur",
   "Faridpur",
@@ -1927,7 +1928,7 @@ var BANGLADESH_DISTRICTS = [
   "Gopalganj",
   "Habiganj",
   "Jamalpur",
-  "Jashore",
+  "Jessore",
   "Jhalokati",
   "Jhenaidah",
   "Joypurhat",
@@ -2563,7 +2564,7 @@ var getAccessToken = (payload) => {
   const accessToken = jwtUtils.createToken(
     payload,
     envVars.ACCESS_TOKEN_SECRET,
-    { expiresIn: envVars.ACCESS_TOKEN_EXPIRES_IN }
+    { expiresIn: "15m" }
   );
   return accessToken;
 };
@@ -2571,7 +2572,7 @@ var getRefreshToken = (payload) => {
   const refreshToken = jwtUtils.createToken(
     payload,
     envVars.REFRESH_TOKEN_SECRET,
-    { expiresIn: 60 * 60 * 60 * 24 * 7 }
+    { expiresIn: "7d" }
   );
   return refreshToken;
 };
@@ -2581,7 +2582,7 @@ var setAccessTokenCookie = (res, token) => {
     secure: envVars.NODE_ENV === "production",
     sameSite: envVars.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
-    maxAge: 60 * 60 * 60 * 24
+    maxAge: 24 * 60 * 60 * 1e3
   });
 };
 var setRefreshTokenCookie = (res, token) => {
@@ -2590,7 +2591,7 @@ var setRefreshTokenCookie = (res, token) => {
     secure: envVars.NODE_ENV === "production",
     sameSite: envVars.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
-    maxAge: 60 * 60 * 60 * 24 * 7
+    maxAge: 7 * 24 * 60 * 60 * 1e3
   });
 };
 var setBetterAuthSessionCookie = (res, token) => {
@@ -2599,7 +2600,7 @@ var setBetterAuthSessionCookie = (res, token) => {
     secure: envVars.NODE_ENV === "production",
     sameSite: envVars.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
-    maxAge: 60 * 60 * 60 * 24
+    maxAge: 7 * 24 * 60 * 60 * 1e3
   });
 };
 var tokenUtils = {
@@ -2829,11 +2830,14 @@ var auth = betterAuth({
     })
   ],
   session: {
-    expiresIn: 60 * 60 * 60 * 24,
-    updateAge: 60 * 60 * 60 * 24,
+    expiresIn: 7 * 24 * 60 * 60,
+    // 7 days
+    updateAge: 24 * 60 * 60,
+    // extend session if older than 1 day
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 60 * 60 * 24
+      maxAge: 5 * 60
+      // cache session data for 5 minutes
     }
   },
   redirectURLs: {
@@ -3039,7 +3043,8 @@ var getNewTokenService = async (refreshToken, sessionToken) => {
     },
     data: {
       token: newRefreshToken,
-      expiresAt: new Date(Date.now() + 60 * 60 * 60 * 24 * 1e3),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1e3),
+      // 7 days
       updatedAt: /* @__PURE__ */ new Date()
     }
   });
@@ -3495,12 +3500,14 @@ var googleLoginSuccessController = catchAsync(
     }
     const result = await googleLoginService(session);
     const { accessToken, refreshToken } = result;
-    console.log(accessToken, "access token", refreshToken, "refresh token");
-    tokenUtils.setAccessTokenCookie(res, accessToken);
-    tokenUtils.setRefreshTokenCookie(res, refreshToken);
     const isValidRedirectPath = redirectPath.startsWith("/") && !redirectPath.startsWith("//");
     const finalRedirectPath = isValidRedirectPath ? redirectPath : "/dashboard";
-    res.redirect(`${envVars.FRONTEND_URL}${finalRedirectPath}`);
+    const params = new URLSearchParams({
+      accessToken,
+      refreshToken,
+      redirect: finalRedirectPath
+    });
+    res.redirect(`${envVars.FRONTEND_URL}/api/auth/set-cookies?${params.toString()}`);
   }
 );
 var handleOAuthErrorController = catchAsync(
