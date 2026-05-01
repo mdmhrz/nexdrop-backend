@@ -1270,7 +1270,9 @@ var loadEnvVariables = () => {
     "STRIPE_WEBHOOK_SECRET",
     "SSLCOMMERZ_STORE_ID",
     "SSLCOMMERZ_STORE_PASSWORD",
-    "SSLCOMMERZ_IS_SANDBOX"
+    "SSLCOMMERZ_IS_SANDBOX",
+    "SUPER_ADMIN_EMAIL",
+    "SUPER_ADMIN_PASSWORD"
   ];
   requiredEnvVars.forEach((varName) => {
     if (!process.env[varName]) {
@@ -1307,6 +1309,10 @@ var loadEnvVariables = () => {
       STORE_ID: process.env.SSLCOMMERZ_STORE_ID,
       STORE_PASSWORD: process.env.SSLCOMMERZ_STORE_PASSWORD,
       IS_SANDBOX: process.env.SSLCOMMERZ_IS_SANDBOX === "true"
+    },
+    SUPER_ADMIN: {
+      EMAIL: process.env.SUPER_ADMIN_EMAIL,
+      PASSWORD: process.env.SUPER_ADMIN_PASSWORD
     }
   };
 };
@@ -3005,9 +3011,10 @@ var getMeService = async (id) => {
 // src/app/module/auth/services/auth.get-new-token.service.ts
 import status32 from "http-status";
 var getNewTokenService = async (refreshToken, sessionToken) => {
+  const cleanSessionToken = sessionToken.split(".")[0];
   const isSessionExist = await prisma.session.findUnique({
     where: {
-      token: sessionToken
+      token: cleanSessionToken
     },
     include: {
       user: true
@@ -3037,19 +3044,19 @@ var getNewTokenService = async (refreshToken, sessionToken) => {
     status: data.status,
     emailVerified: data.emailVerified
   });
-  const { token } = await prisma.session.update({
+  await prisma.session.update({
     where: {
-      token: sessionToken
+      token: cleanSessionToken
     },
     data: {
-      token: newRefreshToken,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1e3),
       // 7 days
       updatedAt: /* @__PURE__ */ new Date()
     }
   });
   return {
-    sessionToken: token,
+    // Return the original session token (with .signature) unchanged so the browser cookie stays valid
+    sessionToken,
     accessToken: newAccessToken,
     refreshToken: newRefreshToken
   };
