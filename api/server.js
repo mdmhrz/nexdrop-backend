@@ -1083,11 +1083,11 @@ var cancelParcelService = async (customerId, parcelId, payload) => {
 };
 
 // src/app/module/parcel/services/getAllParcels.service.ts
-var getAllParcelsService = async (page = 1, limit = 10, status85, district, date) => {
+var getAllParcelsService = async (page = 1, limit = 10, status88, district, date) => {
   const skip = (page - 1) * limit;
   const where = {};
-  if (status85) {
-    where.status = status85;
+  if (status88) {
+    where.status = status88;
   }
   if (district) {
     where.OR = [
@@ -1272,7 +1272,11 @@ var loadEnvVariables = () => {
     "SSLCOMMERZ_STORE_PASSWORD",
     "SSLCOMMERZ_IS_SANDBOX",
     "SUPER_ADMIN_EMAIL",
-    "SUPER_ADMIN_PASSWORD"
+    "SUPER_ADMIN_PASSWORD",
+    "RIDER_EMAIL",
+    "RIDER_PASSWORD",
+    "CUSTOMER_EMAIL",
+    "CUSTOMER_PASSWORD"
   ];
   requiredEnvVars.forEach((varName) => {
     if (!process.env[varName]) {
@@ -1313,6 +1317,14 @@ var loadEnvVariables = () => {
     SUPER_ADMIN: {
       EMAIL: process.env.SUPER_ADMIN_EMAIL,
       PASSWORD: process.env.SUPER_ADMIN_PASSWORD
+    },
+    RIDER: {
+      EMAIL: process.env.RIDER_EMAIL,
+      PASSWORD: process.env.RIDER_PASSWORD
+    },
+    CUSTOMER: {
+      EMAIL: process.env.CUSTOMER_EMAIL,
+      PASSWORD: process.env.CUSTOMER_PASSWORD
     }
   };
 };
@@ -1462,11 +1474,11 @@ var sslcommerzService = {
   verifyIPN(ipnData) {
     const storeId = envVars.SSLCOMMERZ.STORE_ID;
     const storePassword = envVars.SSLCOMMERZ.STORE_PASSWORD;
-    const status85 = ipnData.status;
+    const status88 = ipnData.status;
     const tranId = ipnData.tran_id;
     const amount = ipnData.amount;
     const currency = ipnData.currency;
-    const validationString = `${storeId},${amount},${currency},${tranId},${status85},${storePassword}`;
+    const validationString = `${storeId},${amount},${currency},${tranId},${status88},${storePassword}`;
     const calculatedHash = crypto.createHash("md5").update(validationString).digest("hex");
     return calculatedHash === ipnData.val_id;
   },
@@ -1628,10 +1640,10 @@ var paymentService = {
   /**
    * Update payment status
    */
-  async updatePaymentStatus(paymentId, status85) {
+  async updatePaymentStatus(paymentId, status88) {
     return await prisma.payment.update({
       where: { id: paymentId },
-      data: { status: status85 }
+      data: { status: status88 }
     });
   }
 };
@@ -3942,6 +3954,18 @@ var updateUserRoleController = catchAsync(
   async (req, res) => {
     const { id } = req.params;
     const payload = req.body;
+    const user = req.user;
+    if (!user) {
+      throw new Error("Request User not found");
+    }
+    if (id === user.userId) {
+      sendResponse(res, {
+        httpStatusCode: status53.FORBIDDEN,
+        success: false,
+        message: "You cannot update your own role"
+      });
+      return;
+    }
     const result = await updateUserRoleService(id, payload);
     sendResponse(res, {
       httpStatusCode: status53.OK,
@@ -3961,6 +3985,14 @@ var updateUserStatusController = catchAsync(
     const user = req.user;
     if (!user) {
       throw new Error("Request User not found");
+    }
+    if (id === user.userId) {
+      sendResponse(res, {
+        httpStatusCode: status54.FORBIDDEN,
+        success: false,
+        message: "You cannot update your own status"
+      });
+      return;
     }
     const result = await updateUserStatusService(id, payload, user.userId);
     sendResponse(res, {
@@ -4317,7 +4349,7 @@ var AddressRoutes = router4;
 import { Router as Router5 } from "express";
 
 // src/app/module/rider/controllers/getRiderMe.controller.ts
-import status68 from "http-status";
+import status69 from "http-status";
 
 // src/app/module/rider/services/getRiderMe.service.ts
 import status65 from "http-status";
@@ -4681,7 +4713,7 @@ var getAllCashoutsService = async (query) => {
     }
   };
 };
-var updateCashoutStatusService = async (cashoutId, status85) => {
+var updateCashoutStatusService = async (cashoutId, status88) => {
   const cashout = await prisma.cashout.findUnique({
     where: { id: cashoutId }
   });
@@ -4698,28 +4730,28 @@ var updateCashoutStatusService = async (cashoutId, status85) => {
     // No further transitions allowed
   };
   const allowedTransitions = validTransitions[cashout.status];
-  if (!allowedTransitions || !allowedTransitions.includes(status85)) {
-    throw new Error(`Invalid status transition from ${cashout.status} to ${status85}`);
+  if (!allowedTransitions || !allowedTransitions.includes(status88)) {
+    throw new Error(`Invalid status transition from ${cashout.status} to ${status88}`);
   }
   const updatedCashout = await prisma.cashout.update({
     where: { id: cashoutId },
     data: {
-      status: status85,
+      status: status88,
       processedAt: /* @__PURE__ */ new Date()
     }
   });
-  if (status85 === CashoutStatus.PAID) {
+  if (status88 === CashoutStatus.PAID) {
     await updateStatsCache({
       riderPayouts: { increment: updatedCashout.amount },
       pendingPayouts: { decrement: updatedCashout.amount }
     });
-  } else if (status85 === CashoutStatus.APPROVED) {
-  } else if (status85 === CashoutStatus.REJECTED) {
+  } else if (status88 === CashoutStatus.APPROVED) {
+  } else if (status88 === CashoutStatus.REJECTED) {
     await updateStatsCache({
       pendingPayouts: { decrement: updatedCashout.amount }
     });
   }
-  if (status85 === CashoutStatus.APPROVED) {
+  if (status88 === CashoutStatus.APPROVED) {
     const totalAmount = updatedCashout.amount;
     const pendingEarnings = await prisma.earning.findMany({
       where: {
@@ -4903,13 +4935,142 @@ var getRiderDashboardService = async (userId) => {
   };
 };
 
+// src/app/module/rider/services/getAllRiderApplications.service.ts
+var getAllRiderApplicationsService = async (params) => {
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    accountStatus,
+    district,
+    sortBy = "createdAt",
+    sortOrder = "desc"
+  } = params;
+  const skip = (page - 1) * limit;
+  const where = {};
+  if (accountStatus && Object.values(RiderAccountStatus).includes(accountStatus)) {
+    where.accountStatus = accountStatus;
+  }
+  if (district) {
+    where.district = { contains: district, mode: "insensitive" };
+  }
+  if (search) {
+    where.user = {
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } }
+      ]
+    };
+  }
+  const allowedSortFields = ["createdAt", "updatedAt", "rating", "totalDeliveries", "district"];
+  const orderByField = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
+  const [applications, total] = await Promise.all([
+    prisma.rider.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { [orderByField]: sortOrder },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+            emailVerified: true,
+            image: true,
+            phone: true,
+            createdAt: true
+          }
+        }
+      }
+    }),
+    prisma.rider.count({ where })
+  ]);
+  return {
+    data: applications,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    }
+  };
+};
+
+// src/app/module/rider/services/updateRiderAccountStatus.service.ts
+import status68 from "http-status";
+var updateRiderAccountStatusService = async (riderId, accountStatus) => {
+  const rider = await prisma.rider.findUnique({
+    where: { id: riderId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          status: true
+        }
+      }
+    }
+  });
+  if (!rider) {
+    throw new AppError_default(status68.NOT_FOUND, "Rider application not found");
+  }
+  if (accountStatus === RiderAccountStatus.ACTIVE) {
+    if (rider.user.status === UserStatus.BLOCKED) {
+      throw new AppError_default(
+        status68.FORBIDDEN,
+        "Cannot approve a blocked user account. Unblock the user first."
+      );
+    }
+    if (rider.user.status === UserStatus.DELETED) {
+      throw new AppError_default(
+        status68.FORBIDDEN,
+        "Cannot approve a deleted user account."
+      );
+    }
+  }
+  if (rider.accountStatus === accountStatus) {
+    return rider;
+  }
+  const targetUserRole = accountStatus === RiderAccountStatus.ACTIVE ? UserRole.RIDER : UserRole.CUSTOMER;
+  const roleNeedsUpdate = rider.user.role !== targetUserRole;
+  const [updated] = await prisma.$transaction([
+    prisma.rider.update({
+      where: { id: riderId },
+      data: { accountStatus },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true
+          }
+        }
+      }
+    }),
+    ...roleNeedsUpdate ? [
+      prisma.user.update({
+        where: { id: rider.userId },
+        data: { role: targetUserRole }
+      })
+    ] : []
+  ]);
+  return updated;
+};
+
 // src/app/module/rider/controllers/getRiderMe.controller.ts
 var getRiderMeController = catchAsync(
   async (req, res) => {
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status68.UNAUTHORIZED,
+        httpStatusCode: status69.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -4917,7 +5078,7 @@ var getRiderMeController = catchAsync(
     }
     const rider = await getRiderMeService(userId);
     sendResponse(res, {
-      httpStatusCode: status68.OK,
+      httpStatusCode: status69.OK,
       success: true,
       message: "Rider profile fetched successfully",
       data: rider
@@ -4926,7 +5087,7 @@ var getRiderMeController = catchAsync(
 );
 
 // src/app/module/rider/controllers/riderApply.controller.ts
-import status69 from "http-status";
+import status70 from "http-status";
 
 // src/app/module/rider/validations/rider.validation.ts
 import { z as z4 } from "zod";
@@ -4970,7 +5131,7 @@ var riderApplyController = catchAsync(
     if (user) {
       if (user.role !== UserRole.CUSTOMER) {
         sendResponse(res, {
-          httpStatusCode: status69.FORBIDDEN,
+          httpStatusCode: status70.FORBIDDEN,
           success: false,
           message: "Only customers can apply for rider role"
         });
@@ -4982,7 +5143,7 @@ var riderApplyController = catchAsync(
       });
       if (!dbUser) {
         sendResponse(res, {
-          httpStatusCode: status69.NOT_FOUND,
+          httpStatusCode: status70.NOT_FOUND,
           success: false,
           message: "User not found"
         });
@@ -4990,7 +5151,7 @@ var riderApplyController = catchAsync(
       }
       if (dbUser.riderProfile) {
         sendResponse(res, {
-          httpStatusCode: status69.CONFLICT,
+          httpStatusCode: status70.CONFLICT,
           success: false,
           message: "You already have a rider profile"
         });
@@ -5004,7 +5165,7 @@ var riderApplyController = catchAsync(
       };
       const result = await riderApplyService(userId, authenticatedPayload);
       sendResponse(res, {
-        httpStatusCode: status69.CREATED,
+        httpStatusCode: status70.CREATED,
         success: true,
         message: "Rider application submitted successfully. Your profile is under review.",
         data: result
@@ -5019,7 +5180,7 @@ var riderApplyController = catchAsync(
       };
       const result = await riderApplyService(void 0, unauthenticatedPayload);
       sendResponse(res, {
-        httpStatusCode: status69.CREATED,
+        httpStatusCode: status70.CREATED,
         success: true,
         message: "User profile created and rider application submitted successfully. Please check your email to verify your account.",
         data: result
@@ -5029,13 +5190,13 @@ var riderApplyController = catchAsync(
 );
 
 // src/app/module/rider/controllers/riderEarnings.controller.ts
-import status70 from "http-status";
+import status71 from "http-status";
 var getCurrentEarningsController = catchAsync(
   async (req, res) => {
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status70.UNAUTHORIZED,
+        httpStatusCode: status71.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -5043,7 +5204,7 @@ var getCurrentEarningsController = catchAsync(
     }
     const result = await getCurrentEarningsService(userId);
     sendResponse(res, {
-      httpStatusCode: status70.OK,
+      httpStatusCode: status71.OK,
       success: true,
       message: "Current earnings fetched successfully",
       data: result
@@ -5055,7 +5216,7 @@ var getEarningsHistoryController = catchAsync(
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status70.UNAUTHORIZED,
+        httpStatusCode: status71.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -5063,7 +5224,7 @@ var getEarningsHistoryController = catchAsync(
     }
     const result = await getEarningsHistoryService(userId, req.query);
     sendResponse(res, {
-      httpStatusCode: status70.OK,
+      httpStatusCode: status71.OK,
       success: true,
       message: "Earnings history fetched successfully",
       data: result.earnings,
@@ -5073,13 +5234,13 @@ var getEarningsHistoryController = catchAsync(
 );
 
 // src/app/module/rider/controllers/updateRiderStatus.controller.ts
-import status71 from "http-status";
+import status72 from "http-status";
 var updateRiderStatusController = catchAsync(
   async (req, res) => {
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status71.UNAUTHORIZED,
+        httpStatusCode: status72.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -5091,7 +5252,7 @@ var updateRiderStatusController = catchAsync(
     };
     const rider = await updateRiderStatusService(userId, payload);
     sendResponse(res, {
-      httpStatusCode: status71.OK,
+      httpStatusCode: status72.OK,
       success: true,
       message: "Rider status updated successfully",
       data: rider
@@ -5100,13 +5261,13 @@ var updateRiderStatusController = catchAsync(
 );
 
 // src/app/module/rider/controllers/cashout.controller.ts
-import status72 from "http-status";
+import status73 from "http-status";
 var requestCashoutController = catchAsync(
   async (req, res) => {
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status72.UNAUTHORIZED,
+        httpStatusCode: status73.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -5115,7 +5276,7 @@ var requestCashoutController = catchAsync(
     const { amount } = req.body;
     const result = await requestCashoutService(userId, amount);
     sendResponse(res, {
-      httpStatusCode: status72.CREATED,
+      httpStatusCode: status73.CREATED,
       success: true,
       message: "Cashout request submitted successfully",
       data: result
@@ -5127,7 +5288,7 @@ var getMyCashoutsController = catchAsync(
     const userId = req.user?.userId;
     if (!userId) {
       sendResponse(res, {
-        httpStatusCode: status72.UNAUTHORIZED,
+        httpStatusCode: status73.UNAUTHORIZED,
         success: false,
         message: "Unauthorized access"
       });
@@ -5135,7 +5296,7 @@ var getMyCashoutsController = catchAsync(
     }
     const result = await getMyCashoutsService(userId, req.query);
     sendResponse(res, {
-      httpStatusCode: status72.OK,
+      httpStatusCode: status73.OK,
       success: true,
       message: "Cashouts fetched successfully",
       data: result.cashouts,
@@ -5147,7 +5308,7 @@ var getAllCashoutsController = catchAsync(
   async (req, res) => {
     const result = await getAllCashoutsService(req.query);
     sendResponse(res, {
-      httpStatusCode: status72.OK,
+      httpStatusCode: status73.OK,
       success: true,
       message: "All cashouts fetched successfully",
       data: result.cashouts,
@@ -5161,7 +5322,7 @@ var updateCashoutStatusController = catchAsync(
     const { status: cashoutStatus } = req.body;
     const result = await updateCashoutStatusService(id, cashoutStatus);
     sendResponse(res, {
-      httpStatusCode: status72.OK,
+      httpStatusCode: status73.OK,
       success: true,
       message: `Cashout ${cashoutStatus.toLowerCase()} successfully`,
       data: result
@@ -5170,19 +5331,73 @@ var updateCashoutStatusController = catchAsync(
 );
 
 // src/app/module/rider/controllers/riderDashboard.controller.ts
-import status73 from "http-status";
+import status74 from "http-status";
 var getRiderDashboardController = catchAsync(async (req, res) => {
   const dashboardData = await getRiderDashboardService(req.user.userId);
   sendResponse(res, {
-    httpStatusCode: status73.OK,
+    httpStatusCode: status74.OK,
     success: true,
     message: "Rider dashboard fetched successfully",
     data: dashboardData
   });
 });
 
+// src/app/module/rider/controllers/getAllRiderApplications.controller.ts
+import status75 from "http-status";
+var getAllRiderApplicationsController = catchAsync(
+  async (req, res) => {
+    const {
+      page,
+      limit,
+      search,
+      accountStatus,
+      district,
+      sortBy,
+      sortOrder
+    } = req.query;
+    const result = await getAllRiderApplicationsService({
+      page: page ? Number(page) : void 0,
+      limit: limit ? Number(limit) : void 0,
+      search,
+      accountStatus,
+      district,
+      sortBy,
+      sortOrder: sortOrder || void 0
+    });
+    sendResponse(res, {
+      httpStatusCode: status75.OK,
+      success: true,
+      message: "Rider applications fetched successfully",
+      data: result.data,
+      meta: result.meta
+    });
+  }
+);
+
+// src/app/module/rider/controllers/updateRiderAccountStatus.controller.ts
+import status76 from "http-status";
+var updateRiderAccountStatusController = catchAsync(
+  async (req, res) => {
+    const { riderId } = req.params;
+    const { accountStatus } = req.body;
+    if (!accountStatus || !Object.values(RiderAccountStatus).includes(accountStatus)) {
+      throw new AppError_default(
+        status76.BAD_REQUEST,
+        `accountStatus must be one of: ${Object.values(RiderAccountStatus).join(", ")}`
+      );
+    }
+    const result = await updateRiderAccountStatusService(riderId, accountStatus);
+    sendResponse(res, {
+      httpStatusCode: status76.OK,
+      success: true,
+      message: `Rider application ${accountStatus.toLowerCase()} successfully`,
+      data: result
+    });
+  }
+);
+
 // src/app/middleware/optionalAuth.ts
-import status74 from "http-status";
+import status77 from "http-status";
 var optionalAuth = (...authRoles) => {
   return async (req, res, next) => {
     try {
@@ -5214,10 +5429,10 @@ var optionalAuth = (...authRoles) => {
             res.setHeader("X-Time-Left", timeLeft.toString());
           }
           if (user.status === UserStatus.BLOCKED || user.status === UserStatus.DELETED) {
-            throw new AppError_default(status74.FORBIDDEN, `Your account has been ${user.status === UserStatus.BLOCKED ? "blocked" : "deleted"}. Please contact support.`);
+            throw new AppError_default(status77.FORBIDDEN, `Your account has been ${user.status === UserStatus.BLOCKED ? "blocked" : "deleted"}. Please contact support.`);
           }
           if (authRoles.length > 0 && !authRoles.includes(user.role)) {
-            throw new AppError_default(status74.FORBIDDEN, "You are not authorized to access this resource");
+            throw new AppError_default(status77.FORBIDDEN, "You are not authorized to access this resource");
           }
           req.user = {
             userId: user.id,
@@ -5231,7 +5446,7 @@ var optionalAuth = (...authRoles) => {
         const verifiedToken = jwtUtils.verifyToken(accessToken, envVars.ACCESS_TOKEN_SECRET);
         if (verifiedToken.success) {
           if (authRoles.length > 0 && !authRoles.includes(verifiedToken.data.role)) {
-            throw new AppError_default(status74.FORBIDDEN, "Forbidden access! you do not have permission to access this route");
+            throw new AppError_default(status77.FORBIDDEN, "Forbidden access! you do not have permission to access this route");
           }
           if (!req.user) {
             req.user = {
@@ -5304,6 +5519,16 @@ router5.patch(
   validateRequest(updateCashoutStatusValidation),
   updateCashoutStatusController
 );
+router5.get(
+  "/applications",
+  checkAuth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  getAllRiderApplicationsController
+);
+router5.patch(
+  "/applications/:riderId/account-status",
+  checkAuth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  updateRiderAccountStatusController
+);
 var RiderRoutes = router5;
 
 // src/app/module/payment/routes/payment.route.ts
@@ -5319,7 +5544,7 @@ var paymentInitiateSchema = z6.object({
 });
 
 // src/app/module/payment/controllers/payment.initiate.controller.ts
-import status75 from "http-status";
+import status78 from "http-status";
 var initiatePaymentController = catchAsync(
   async (req, res) => {
     const userId = req.user.userId;
@@ -5330,7 +5555,7 @@ var initiatePaymentController = catchAsync(
       userId
     );
     sendResponse(res, {
-      httpStatusCode: status75.OK,
+      httpStatusCode: status78.OK,
       success: true,
       message: "Payment initiated successfully",
       data: result
@@ -5339,7 +5564,7 @@ var initiatePaymentController = catchAsync(
 );
 
 // src/app/module/payment/controllers/payment.webhook.controller.ts
-import status76 from "http-status";
+import status79 from "http-status";
 var webhookController = catchAsync(
   async (req, res) => {
     const sig = req.headers["stripe-signature"];
@@ -5348,14 +5573,14 @@ var webhookController = catchAsync(
       const event = await stripe_service_default.verifyWebhookSignature(payload, sig);
       await payment_service_default.handleStripeWebhook(event);
       sendResponse(res, {
-        httpStatusCode: status76.OK,
+        httpStatusCode: status79.OK,
         success: true,
         message: "Webhook processed successfully",
         data: null
       });
     } catch (error) {
       console.error("Webhook error:", error);
-      return res.status(status76.BAD_REQUEST).json({
+      return res.status(status79.BAD_REQUEST).json({
         success: false,
         message: error instanceof Error ? error.message : "Unknown error"
       });
@@ -5364,7 +5589,7 @@ var webhookController = catchAsync(
 );
 
 // src/app/module/payment/controllers/payment.sslcommerz.controller.ts
-import status77 from "http-status";
+import status80 from "http-status";
 var sslcommerzIPNController = catchAsync(
   async (req, res) => {
     const ipnData = req.body;
@@ -5372,7 +5597,7 @@ var sslcommerzIPNController = catchAsync(
       const isValid = sslcommerz_service_default.verifyIPN(ipnData);
       if (!isValid) {
         console.error("SSL Commerz IPN signature verification failed");
-        return res.status(status77.BAD_REQUEST).json({
+        return res.status(status80.BAD_REQUEST).json({
           success: false,
           message: "Invalid IPN signature"
         });
@@ -5381,7 +5606,7 @@ var sslcommerzIPNController = catchAsync(
       const amount = sslcommerz_service_default.extractAmount(ipnData);
       if (!sslcommerz_service_default.isPaymentSuccessful(ipnData)) {
         console.log(`SSL Commerz payment failed: ${ipnData.status}`);
-        return res.status(status77.OK).json({
+        return res.status(status80.OK).json({
           success: true,
           message: "IPN received (payment not successful)"
         });
@@ -5389,14 +5614,14 @@ var sslcommerzIPNController = catchAsync(
       const paymentType = metadata.type || "default";
       await payment_service_default.handleWebhookCallback(paymentType, metadata, amount);
       sendResponse(res, {
-        httpStatusCode: status77.OK,
+        httpStatusCode: status80.OK,
         success: true,
         message: "SSL Commerz IPN processed successfully",
         data: null
       });
     } catch (error) {
       console.error("SSL Commerz IPN error:", error);
-      return res.status(status77.INTERNAL_SERVER_ERROR).json({
+      return res.status(status80.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: error instanceof Error ? error.message : "Error processing SSL Commerz IPN"
       });
@@ -5463,7 +5688,7 @@ var PaymentRoutes = router6;
 import { Router as Router7 } from "express";
 
 // src/app/module/analytics/controllers/revenue.controller.ts
-import status78 from "http-status";
+import status81 from "http-status";
 
 // src/app/module/analytics/services/revenue.service.ts
 var getRevenueAnalyticsService = async (query) => {
@@ -5585,7 +5810,7 @@ var getRevenueAnalyticsController = catchAsync(
   async (req, res) => {
     const result = await getRevenueAnalyticsService(req.query);
     sendResponse(res, {
-      httpStatusCode: status78.OK,
+      httpStatusCode: status81.OK,
       success: true,
       message: "Revenue analytics fetched successfully",
       data: result
@@ -5594,7 +5819,7 @@ var getRevenueAnalyticsController = catchAsync(
 );
 
 // src/app/module/analytics/controllers/dashboard.controller.ts
-import status79 from "http-status";
+import status82 from "http-status";
 
 // src/app/module/analytics/services/dashboard.service.ts
 var getDashboardMetricsService = async () => {
@@ -5642,7 +5867,7 @@ var getDashboardMetricsController = catchAsync(
   async (req, res) => {
     const result = await getDashboardMetricsService();
     sendResponse(res, {
-      httpStatusCode: status79.OK,
+      httpStatusCode: status82.OK,
       success: true,
       message: "Dashboard metrics fetched successfully",
       data: result
@@ -5668,26 +5893,26 @@ var AnalyticsRoutes = router7;
 import { Router as Router8 } from "express";
 
 // src/app/module/rating/controllers/rating.controller.ts
-import status81 from "http-status";
+import status84 from "http-status";
 
 // src/app/module/rating/services/rating.service.ts
-import status80 from "http-status";
+import status83 from "http-status";
 var submitRatingService = async (customerId, data) => {
   const parcel = await prisma.parcel.findUnique({
     where: { id: data.parcelId },
     include: { rider: true }
   });
   if (!parcel) {
-    throw new AppError_default(status80.NOT_FOUND, "Parcel not found");
+    throw new AppError_default(status83.NOT_FOUND, "Parcel not found");
   }
   if (parcel.customerId !== customerId) {
-    throw new AppError_default(status80.FORBIDDEN, "You can only rate your own parcels");
+    throw new AppError_default(status83.FORBIDDEN, "You can only rate your own parcels");
   }
   if (parcel.status !== ParcelStatus.DELIVERED) {
-    throw new AppError_default(status80.BAD_REQUEST, "You can only rate delivered parcels");
+    throw new AppError_default(status83.BAD_REQUEST, "You can only rate delivered parcels");
   }
   if (!parcel.riderId) {
-    throw new AppError_default(status80.BAD_REQUEST, "No rider assigned to this parcel");
+    throw new AppError_default(status83.BAD_REQUEST, "No rider assigned to this parcel");
   }
   const existingRating = await prisma.riderRating.findUnique({
     where: {
@@ -5698,7 +5923,7 @@ var submitRatingService = async (customerId, data) => {
     }
   });
   if (existingRating) {
-    throw new AppError_default(status80.CONFLICT, "You have already rated this parcel");
+    throw new AppError_default(status83.CONFLICT, "You have already rated this parcel");
   }
   const rating = await prisma.riderRating.create({
     data: {
@@ -5760,7 +5985,7 @@ var getRatingSummaryService = async (riderId) => {
     where: { id: riderId }
   });
   if (!rider) {
-    throw new AppError_default(status80.NOT_FOUND, "Rider not found");
+    throw new AppError_default(status83.NOT_FOUND, "Rider not found");
   }
   const ratings = await prisma.riderRating.findMany({
     where: { riderId },
@@ -5785,14 +6010,14 @@ var updateRatingService = async (ratingId, customerId, data) => {
     include: { rider: true }
   });
   if (!rating) {
-    throw new AppError_default(status80.NOT_FOUND, "Rating not found");
+    throw new AppError_default(status83.NOT_FOUND, "Rating not found");
   }
   if (rating.customerId !== customerId) {
-    throw new AppError_default(status80.FORBIDDEN, "You can only update your own ratings");
+    throw new AppError_default(status83.FORBIDDEN, "You can only update your own ratings");
   }
   const hoursSinceCreation = (Date.now() - rating.createdAt.getTime()) / (1e3 * 60 * 60);
   if (hoursSinceCreation > 24) {
-    throw new AppError_default(status80.BAD_REQUEST, "You can only edit ratings within 24 hours");
+    throw new AppError_default(status83.BAD_REQUEST, "You can only edit ratings within 24 hours");
   }
   const oldRatingValue = rating.rating;
   const updatedRating = await prisma.riderRating.update({
@@ -5827,14 +6052,14 @@ var deleteRatingService = async (ratingId, customerId) => {
     include: { rider: true }
   });
   if (!rating) {
-    throw new AppError_default(status80.NOT_FOUND, "Rating not found");
+    throw new AppError_default(status83.NOT_FOUND, "Rating not found");
   }
   if (rating.customerId !== customerId) {
-    throw new AppError_default(status80.FORBIDDEN, "You can only delete your own ratings");
+    throw new AppError_default(status83.FORBIDDEN, "You can only delete your own ratings");
   }
   const hoursSinceCreation = (Date.now() - rating.createdAt.getTime()) / (1e3 * 60 * 60);
   if (hoursSinceCreation > 24) {
-    throw new AppError_default(status80.BAD_REQUEST, "You can only delete ratings within 24 hours");
+    throw new AppError_default(status83.BAD_REQUEST, "You can only delete ratings within 24 hours");
   }
   await prisma.riderRating.delete({
     where: { id: ratingId }
@@ -5928,7 +6153,7 @@ var submitRatingController = catchAsync(async (req, res) => {
   const validatedData = submitRatingSchema.parse(req.body);
   const rating = await submitRatingService(req.user.userId, validatedData);
   sendResponse(res, {
-    httpStatusCode: status81.CREATED,
+    httpStatusCode: status84.CREATED,
     success: true,
     message: "Rating submitted successfully",
     data: rating
@@ -5941,7 +6166,7 @@ var getRiderRatingsController = catchAsync(async (req, res) => {
   const limit = parseInt(validatedData.limit);
   const result = await getRiderRatingsService(riderId, page, limit);
   sendResponse(res, {
-    httpStatusCode: status81.OK,
+    httpStatusCode: status84.OK,
     success: true,
     message: "Rider ratings fetched successfully",
     data: result.ratings,
@@ -5952,7 +6177,7 @@ var getRatingSummaryController = catchAsync(async (req, res) => {
   const { riderId } = req.params;
   const summary = await getRatingSummaryService(riderId);
   sendResponse(res, {
-    httpStatusCode: status81.OK,
+    httpStatusCode: status84.OK,
     success: true,
     message: "Rating summary fetched successfully",
     data: summary
@@ -5963,7 +6188,7 @@ var updateRatingController = catchAsync(async (req, res) => {
   const validatedData = updateRatingSchema.parse(req.body);
   const rating = await updateRatingService(id, req.user.userId, validatedData);
   sendResponse(res, {
-    httpStatusCode: status81.OK,
+    httpStatusCode: status84.OK,
     success: true,
     message: "Rating updated successfully",
     data: rating
@@ -5973,7 +6198,7 @@ var deleteRatingController = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await deleteRatingService(id, req.user.userId);
   sendResponse(res, {
-    httpStatusCode: status81.OK,
+    httpStatusCode: status84.OK,
     success: true,
     message: result.message,
     data: null
@@ -5983,7 +6208,7 @@ var getRecentReviewsController = catchAsync(async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const reviews = await getRecentReviewsService(limit);
   sendResponse(res, {
-    httpStatusCode: status81.OK,
+    httpStatusCode: status84.OK,
     success: true,
     message: "Recent reviews fetched successfully",
     data: reviews
@@ -5993,7 +6218,7 @@ var getMyRatingsController = catchAsync(async (req, res) => {
   const customerId = req.user.userId;
   const ratings = await getMyRatingsService(customerId);
   sendResponse(res, {
-    httpStatusCode: status81.OK,
+    httpStatusCode: status84.OK,
     success: true,
     message: "My ratings fetched successfully",
     data: ratings
@@ -6034,13 +6259,13 @@ router9.use("/ratings", RatingRoutes);
 var IndexRoutes = router9;
 
 // src/app/middleware/globalErrorHandler.ts
-import status84 from "http-status";
+import status87 from "http-status";
 import z8 from "zod";
 
 // src/app/errorHelper/handleZodError.ts
-import status82 from "http-status";
+import status85 from "http-status";
 var handleZodError = (error) => {
-  const statusCode = status82.BAD_REQUEST;
+  const statusCode = status85.BAD_REQUEST;
   const message = "Zod Validation Error";
   const errorSources = [];
   errorSources.push(...error.issues.map((issue) => ({
@@ -6056,42 +6281,42 @@ var handleZodError = (error) => {
 };
 
 // src/app/errorHelper/handlePrismaErrors.ts
-import status83 from "http-status";
+import status86 from "http-status";
 var getStatusCodeFromPrismaError = (errorCode) => {
   if (errorCode === "P2002") {
-    return status83.CONFLICT;
+    return status86.CONFLICT;
   }
   if (["P2025", "P2001", "P2015", "P2018"].includes(errorCode)) {
-    return status83.NOT_FOUND;
+    return status86.NOT_FOUND;
   }
   if (["P1000", "P6002"].includes(errorCode)) {
-    return status83.UNAUTHORIZED;
+    return status86.UNAUTHORIZED;
   }
   if (["P1010", "P6010"].includes(errorCode)) {
-    return status83.FORBIDDEN;
+    return status86.FORBIDDEN;
   }
   if (errorCode === "P6003") {
-    return status83.PAYMENT_REQUIRED;
+    return status86.PAYMENT_REQUIRED;
   }
   if (["P1008", "P2004", "P6004"].includes(errorCode)) {
-    return status83.GATEWAY_TIMEOUT;
+    return status86.GATEWAY_TIMEOUT;
   }
   if (errorCode === "P5011") {
-    return status83.TOO_MANY_REQUESTS;
+    return status86.TOO_MANY_REQUESTS;
   }
   if (errorCode === "P6009") {
     return 413;
   }
   if (errorCode.startsWith("P1") || ["P2024", "P2037", "P6008"].includes(errorCode)) {
-    return status83.SERVICE_UNAVAILABLE;
+    return status86.SERVICE_UNAVAILABLE;
   }
   if (errorCode.startsWith("P2")) {
-    return status83.BAD_REQUEST;
+    return status86.BAD_REQUEST;
   }
   if (errorCode.startsWith("P3") || errorCode.startsWith("P4")) {
-    return status83.INTERNAL_SERVER_ERROR;
+    return status86.INTERNAL_SERVER_ERROR;
   }
-  return status83.INTERNAL_SERVER_ERROR;
+  return status86.INTERNAL_SERVER_ERROR;
 };
 var formatErrorMeta = (meta) => {
   if (!meta) return "";
@@ -6161,7 +6386,7 @@ var handlePrismaClientUnknownError = (error) => {
   ];
   return {
     success: false,
-    statusCode: status83.INTERNAL_SERVER_ERROR,
+    statusCode: status86.INTERNAL_SERVER_ERROR,
     message: `Prisma Client Unknown Request Error: ${mainMessage}`,
     errorSources
   };
@@ -6182,13 +6407,13 @@ var handlePrismaClientValidationError = (error) => {
   });
   return {
     success: false,
-    statusCode: status83.BAD_REQUEST,
+    statusCode: status86.BAD_REQUEST,
     message: `Prisma Client Validation Error: ${mainMessage}`,
     errorSources
   };
 };
 var handlerPrismaClientInitializationError = (error) => {
-  const statusCode = error.errorCode ? getStatusCodeFromPrismaError(error.errorCode) : status83.SERVICE_UNAVAILABLE;
+  const statusCode = error.errorCode ? getStatusCodeFromPrismaError(error.errorCode) : status86.SERVICE_UNAVAILABLE;
   const cleanMessage = error.message;
   cleanMessage.replace(/Invalid `.*?` invocation:?\s*/i, "");
   const lines = cleanMessage.split("\n").filter((line) => line.trim());
@@ -6213,7 +6438,7 @@ var handlerPrismaClientRustPanicError = () => {
   }];
   return {
     success: false,
-    statusCode: status83.INTERNAL_SERVER_ERROR,
+    statusCode: status86.INTERNAL_SERVER_ERROR,
     message: "Prisma Client Rust Panic Error: The database engine crashed due to a fatal error.",
     errorSources
   };
@@ -6225,31 +6450,31 @@ var globalErrorHandler = async (error, req, res, next) => {
     console.error("Global Error Handler:", error);
   }
   let errorSources = [];
-  let statusCode = status84.INTERNAL_SERVER_ERROR;
+  let statusCode = status87.INTERNAL_SERVER_ERROR;
   let message = "Internal Server Error";
   if (error instanceof prismaNamespace_exports.PrismaClientKnownRequestError) {
     const simplifiedError = handlePrismaClientKnownRequestError(error);
-    statusCode = simplifiedError.statusCode || status84.CONFLICT;
+    statusCode = simplifiedError.statusCode || status87.CONFLICT;
     message = simplifiedError.message;
     errorSources = [...simplifiedError.errorSources];
   } else if (error instanceof prismaNamespace_exports.PrismaClientUnknownRequestError) {
     const simplifiedError = handlePrismaClientUnknownError(error);
-    statusCode = simplifiedError.statusCode || status84.INTERNAL_SERVER_ERROR;
+    statusCode = simplifiedError.statusCode || status87.INTERNAL_SERVER_ERROR;
     message = simplifiedError.message;
     errorSources = [...simplifiedError.errorSources];
   } else if (error instanceof prismaNamespace_exports.PrismaClientValidationError) {
     const simplifiedError = handlePrismaClientValidationError(error);
-    statusCode = simplifiedError.statusCode || status84.BAD_REQUEST;
+    statusCode = simplifiedError.statusCode || status87.BAD_REQUEST;
     message = simplifiedError.message;
     errorSources = [...simplifiedError.errorSources];
   } else if (error instanceof prismaNamespace_exports.PrismaClientRustPanicError) {
     const simplifiedError = handlerPrismaClientRustPanicError();
-    statusCode = simplifiedError.statusCode || status84.INTERNAL_SERVER_ERROR;
+    statusCode = simplifiedError.statusCode || status87.INTERNAL_SERVER_ERROR;
     message = simplifiedError.message;
     errorSources = [...simplifiedError.errorSources];
   } else if (error instanceof prismaNamespace_exports.PrismaClientInitializationError) {
     const simplifiedError = handlerPrismaClientInitializationError(error);
-    statusCode = simplifiedError.statusCode || status84.SERVICE_UNAVAILABLE;
+    statusCode = simplifiedError.statusCode || status87.SERVICE_UNAVAILABLE;
     message = simplifiedError.message;
     errorSources = [...simplifiedError.errorSources];
   } else if (error instanceof z8.ZodError) {
@@ -6261,7 +6486,7 @@ var globalErrorHandler = async (error, req, res, next) => {
     statusCode = error.statusCode;
     message = error.message;
   } else if (error instanceof Error) {
-    statusCode = status84.INTERNAL_SERVER_ERROR;
+    statusCode = status87.INTERNAL_SERVER_ERROR;
     message = error.message;
   }
   const errorResponse = {
