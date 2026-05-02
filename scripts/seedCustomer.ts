@@ -112,7 +112,7 @@ const seedCustomer = async () => {
         });
 
         if (existingCustomer) {
-            log.warn(`Customer already exists with email: ${customerEmail}`);
+            log.error(`Customer already exists with email: ${customerEmail}`);
             log.info(`Current role: ${existingCustomer.role}`);
             log.info(`Current status: ${existingCustomer.status}`);
             log.info(`Email verified: ${existingCustomer.emailVerified}`);

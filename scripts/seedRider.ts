@@ -115,7 +115,7 @@ const seedRider = async () => {
         });
 
         if (existingUser) {
-            log.warn(`User already exists with email: ${riderEmail}`);
+            log.error(`User already exists with email: ${riderEmail}`);
             log.info(`Current role: ${existingUser.role}`);
             log.info(`Current status: ${existingUser.status}`);
             log.info(`Email verified: ${existingUser.emailVerified}`);

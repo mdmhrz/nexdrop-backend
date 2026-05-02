@@ -112,7 +112,7 @@ const seedAdmin = async () => {
         });
 
         if (existingAdmin) {
-            log.warn(`Admin user already exists with email: ${superAdminEmail}`);
+            log.error(`Admin user already exists with email: ${superAdminEmail}`);
             log.info(`Current role: ${existingAdmin.role}`);
             log.info(`Current status: ${existingAdmin.status}`);
             log.info(`Email verified: ${existingAdmin.emailVerified}`);
