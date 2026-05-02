@@ -14,6 +14,16 @@ export const updateUserStatusController = catchAsync(
             throw new Error("Request User not found");
         }
 
+        // Prevent users from updating their own status
+        if (id === user.userId) {
+            sendResponse(res, {
+                httpStatusCode: status.FORBIDDEN,
+                success: false,
+                message: "You cannot update your own status"
+            });
+            return;
+        }
+
         const result = await updateUserStatusService(id as string, payload, user.userId);
 
         sendResponse(res, {

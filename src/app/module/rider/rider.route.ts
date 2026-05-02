@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { riderApplyController, getRiderMeController, updateRiderStatusController, getCurrentEarningsController, getEarningsHistoryController, requestCashoutController, getMyCashoutsController, getAllCashoutsController, updateCashoutStatusController, getRiderDashboardController } from "./controllers";
+import { riderApplyController, getRiderMeController, updateRiderStatusController, getCurrentEarningsController, getEarningsHistoryController, requestCashoutController, getMyCashoutsController, getAllCashoutsController, updateCashoutStatusController, getRiderDashboardController, getAllRiderApplicationsController, updateRiderAccountStatusController } from "./controllers";
 import { optionalAuth } from "../../middleware/optionalAuth";
 import { checkAuth } from "../../middleware/checkAuth";
 
@@ -81,6 +81,20 @@ router.patch(
     checkAuth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
     validateRequest(updateCashoutStatusValidation),
     updateCashoutStatusController
+);
+
+// GET /rider/applications - Get All Rider Applications (Admin Only)
+router.get(
+    '/applications',
+    checkAuth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+    getAllRiderApplicationsController
+);
+
+// PATCH /rider/applications/:riderId/account-status - Approve/Reject/Suspend Rider (Admin Only)
+router.patch(
+    '/applications/:riderId/account-status',
+    checkAuth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+    updateRiderAccountStatusController
 );
 
 export const RiderRoutes = router;

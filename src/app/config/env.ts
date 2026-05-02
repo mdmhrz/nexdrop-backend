@@ -36,6 +36,14 @@ interface EnvConfig {
         EMAIL: string;
         PASSWORD: string;
     };
+    RIDER: {
+        EMAIL: string;
+        PASSWORD: string;
+    };
+    CUSTOMER: {
+        EMAIL: string;
+        PASSWORD: string;
+    }
 
 }
 
@@ -69,7 +77,11 @@ const loadEnvVariables = (): EnvConfig => {
         "SSLCOMMERZ_STORE_PASSWORD",
         "SSLCOMMERZ_IS_SANDBOX",
         "SUPER_ADMIN_EMAIL",
-        "SUPER_ADMIN_PASSWORD"
+        "SUPER_ADMIN_PASSWORD",
+        "RIDER_EMAIL",
+        "RIDER_PASSWORD",
+        "CUSTOMER_EMAIL",
+        "CUSTOMER_PASSWORD"
     ];
 
     requiredEnvVars.forEach((varName) => {
@@ -112,6 +124,14 @@ const loadEnvVariables = (): EnvConfig => {
         SUPER_ADMIN: {
             EMAIL: process.env.SUPER_ADMIN_EMAIL as string,
             PASSWORD: process.env.SUPER_ADMIN_PASSWORD as string,
+        },
+        RIDER: {
+            EMAIL: process.env.RIDER_EMAIL as string,
+            PASSWORD: process.env.RIDER_PASSWORD as string,
+        },
+        CUSTOMER: {
+            EMAIL: process.env.CUSTOMER_EMAIL as string,
+            PASSWORD: process.env.CUSTOMER_PASSWORD as string,
         }
     }
 }
